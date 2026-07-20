@@ -288,7 +288,16 @@ window.AUTH_UTILS = {
 // ─── Auto-inicialización ─────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Se estiver na página de login, aguarda Firebase e redireciona se logado
   if (document.getElementById('login-form')) {
+    // Aguarda Firebase verificar o estado de auth
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // Já está logado → redireciona para vitrine
+        window.location.replace(AUTH.PAGES.vitrine);
+      }
+    });
+    // Inicializa o formulário de login
     initLoginPage();
   }
 });

@@ -44,13 +44,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  // Guard: autenticación
-  if (!window.AUTH_UTILS.requireAuth()) return;
+  let initialized = false;
 
-  // Carga películas del archivo filmes.txt
-  await loadMoviesFromFilePlayer();
+  // Aguarda o Firebase verificar o estado de auth antes de prosseguir
+  window.AUTH_UTILS.onAuthStateChanged((user) => {
+    if (initialized) return;
 
-  initPlayer();
+    if (!user) {
+      setTimeout(() => {
+        if (!initialized) {
+          initialized = true;
+          sessionStorage.setItem('seleto_redirect', window.location.href);
+          window.location.replace('index.html');
+        }
+      }, 1000);
+      return;
+    }
+
+    initialized = true;
+    loadMoviesFromFilePlayer().then(() => initPlayer());
+  });
 });
 
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────

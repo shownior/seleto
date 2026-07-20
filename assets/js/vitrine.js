@@ -202,12 +202,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('[SELETO] auth.js no cargado.');
     return;
   }
-  if (!window.AUTH_UTILS.requireAuth()) return;
 
-  // Carga películas del archivo filmes.txt
-  await loadMoviesFromFile();
+  let initialized = false;
 
-  initVitrine();
+  // Aguarda o Firebase verificar o estado de auth antes de prosseguir
+  window.AUTH_UTILS.onAuthStateChanged((user) => {
+    if (initialized) return; // Evita execução múltipla
+
+    if (!user) {
+      // Pequeno delay para dar tempo ao Firebase restaurar sessão
+      setTimeout(() => {
+        if (!initialized) {
+          initialized = true;
+          sessionStorage.setItem('seleto_redirect', window.location.href);
+          window.location.replace('index.html');
+        }
+      }, 1000); // Aguarda 1s para o Firebase restaurar a sessão
+      return;
+    }
+
+    initialized = true;
+    loadMoviesFromFile().then(() => initVitrine());
+  });
 });
 
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────
