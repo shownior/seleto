@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- =====================================================
+       SELETO — Plataforma de Streaming
+       Página: Player de Vídeo (player.html)
+  ====================================================== -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO (dinâmico via JS) -->
+  <title>Assistindo... — SELETO</title>
+  <meta name="description" content="Assista filmes premium na SELETO em qualidade cinematográfica." />
+  <meta name="theme-color" content="#000000" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+
+  <!-- Estilos específicos do player (inline para evitar FOUC) -->
+  <style>
+    /* Fundo ainda mais escuro na página do player */
+    body {
+      background: linear-gradient(180deg, #000 0%, #0d0202 40%, #1a0606 100%);
+    }
+
+    /* ── Área de vídeo ── */
+    .player-stage {
+      background: #000;
+      width: 100%;
+    }
+
+    .video-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    video#main-video {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 80vh;
+      background: #000;
+      outline: none;
+    }
+
+    /* Linha vermelha de progresso customizada (apenas estética, não substitui os controles) */
+    video#main-video:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    /* ── Card de informações ── */
+    .player-info-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 32px 0;
+    }
+
+    /* ── Meta chips ── */
+    .meta-chips {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 12px 0 20px;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .meta-chip.primary {
+      background: rgba(179,27,27,0.18);
+      border: 1px solid rgba(179,27,27,0.4);
+      color: #e07070;
+    }
+
+    .meta-chip.neutral {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-secondary);
+    }
+
+    .meta-chip.gold {
+      background: rgba(240,165,0,0.1);
+      border: 1px solid rgba(240,165,0,0.3);
+      color: #f0a500;
+    }
+
+    /* ── Seção relacionados ── */
+    .related-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px 48px;
+    }
+
+    @media (max-width: 600px) {
+      .player-info-wrap { padding: 20px 16px 0; }
+      .related-wrap     { padding: 0 16px 40px; }
+    }
+
+    /* Botão voltar com ícone animado */
+    #btn-voltar svg {
+      transition: transform 0.2s ease;
+    }
+    #btn-voltar:hover svg {
+      transform: translateX(-4px);
+    }
+  </style>
+</head>
+<body class="player-page">
+
+  <!-- ──────────────────────────────────────
+       HEADER
+  ────────────────────────────────────── -->
+  <header class="player-header" role="banner">
+    <!-- Botão Voltar -->
+    <button id="btn-voltar" class="btn btn-secondary" aria-label="Voltar ao catálogo">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Voltar
+    </button>
+
+    <!-- Logo -->
+    <a href="vitrine.html" class="logo" aria-label="SELETO – página inicial">SELETO</a>
+
+    <!-- Placeholder para simetria visual (mobile) -->
+    <div style="width:90px;" aria-hidden="true"></div>
+  </header>
+
+
+  <!-- ──────────────────────────────────────
+       ÁREA DO VÍDEO
+  ────────────────────────────────────── -->
+  <section id="player-stage" class="player-stage" aria-label="Player de vídeo">
+    <div class="video-container">
+      <!--
+        O src é definido dinamicamente por player.js.
+        autoplay: reproduz automaticamente (pode ser bloqueado por políticas do browser).
+        controls: exibe os controles nativos do navegador.
+        preload: carrega metadados para exibir duração imediata.
+      -->
+      <video
+        id="main-video"
+        controls
+        autoplay
+        preload="metadata"
+        playsinline
+        aria-label="Vídeo do filme"
+      >
+        Seu navegador não suporta o elemento de vídeo HTML5.
+        <a href="vitrine.html">Voltar ao catálogo</a>
+      </video>
+    </div>
+  </section>
+
+
+  <!-- ──────────────────────────────────────
+       INFORMAÇÕES DO FILME
+  ────────────────────────────────────── -->
+  <div class="player-info-wrap">
+    <article class="player-info-card glass-panel" aria-label="Informações do filme">
+
+      <!-- Breadcrumb / navegação -->
+      <nav class="player-breadcrumb" aria-label="Caminho de navegação">
+        <a href="vitrine.html">Catálogo</a>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        <span id="breadcrumb-title" aria-current="page">Carregando...</span>
+      </nav>
+
+      <!-- Título -->
+      <h1 id="player-title" class="player-title">Carregando...</h1>
+
+      <!-- Meta Chips -->
+      <div class="meta-chips" aria-label="Informações do filme">
+        <span class="meta-chip primary" aria-label="Gênero">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+          </svg>
+          <span id="player-genero">—</span>
+        </span>
+
+        <span class="meta-chip neutral" aria-label="Ano de lançamento">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span id="player-ano">—</span>
+        </span>
+
+        <span class="meta-chip neutral" aria-label="Duração">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span id="player-duracao">—</span>
+        </span>
+
+        <span class="meta-chip gold" aria-label="Avaliação">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+          </svg>
+          <span id="player-avaliacao">—</span> / 10
+        </span>
+      </div>
+
+      <!-- Sinopse -->
+      <p id="player-description" class="player-description">
+        Carregando sinopse...
+      </p>
+
+    </article>
+  </div>
+
+
+  <!-- ──────────────────────────────────────
+       FILMES RELACIONADOS
+  ────────────────────────────────────── -->
+  <div class="related-wrap">
+    <div class="divider" aria-hidden="true"></div>
+
+    <section class="related-section" aria-label="Filmes relacionados">
+      <div class="section-header">
+        <h2 class="section-title">Você Também Pode Gostar</h2>
+      </div>
+      <div
+        id="related-grid"
+        class="related-grid"
+        role="list"
+        aria-label="Filmes relacionados"
+      >
+        <!-- Renderizado dinamicamente por player.js -->
+      </div>
+    </section>
+  </div>
+
+
+  <!-- ──────────────────────────────────────
+       SCRIPTS
+       ORDEM: auth.js → player.js
+  ────────────────────────────────────── -->
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/player.js"></script>
+
+  <!-- Micro-interação: cursor personalizado sobre o vídeo -->
+  <script>
+    (function () {
+      const videoEl = document.getElementById('main-video');
+      if (!videoEl) return;
+
+      let hideTimer;
+      const stage = videoEl.closest('.player-stage') || videoEl.parentElement;
+
+      // Esconde cursor após 3s de inatividade sobre o vídeo
+      stage.addEventListener('mousemove', () => {
+        stage.style.cursor = 'default';
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          if (!videoEl.paused) stage.style.cursor = 'none';
+        }, 3000);
+      });
+
+      // Mostra cursor ao pausar
+      videoEl.addEventListener('pause', () => {
+        stage.style.cursor = 'default';
+        clearTimeout(hideTimer);
+      });
+    })();
+  </script>
+
+</body>
+</html>
