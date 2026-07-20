@@ -1,83 +1,59 @@
 /**
- * SELETO — Lógica de Autenticação
- * Arquivo: assets/js/auth.js
+ * SELETO — Autenticación con Firebase
+ * Archivo: assets/js/auth.js
  *
  * Responsabilidades:
- *  - Gerenciar login / logout
- *  - Guardar / ler token do localStorage
- *  - Redirecionar usuários não autenticados
- *  - Exportar helpers de auth usados por outros scripts
+ *  - Gestionar login / logout con Firebase Auth
+ *  - Verificar estado de autenticación
+ *  - Redirigir usuarios no autenticados
+ *  - Exportar helpers de auth usados por otros scripts
  */
 
 'use strict';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 const AUTH = {
-  TOKEN_KEY:   'seleto_auth_token',
-  USER_KEY:    'seleto_user',
-  CREDENTIAL: {
-    email:    'admin@seleto.com',
-    password: '123456',
-  },
   PAGES: {
-    login:    'index.html',
-    vitrine:  'vitrine.html',
-    player:   'player.html',
+    login:   'index.html',
+    vitrine: 'vitrine.html',
+    player:  'player.html',
   },
 };
 
-// ─── Token Helpers ──────────────────────────────────────────────────────────────
+// ─── Verificar si hay usuario conectado ──────────────────────────────────────
 
 /**
- * Verifica se há token válido no localStorage.
+ * Verifica si hay un usuario autenticado en Firebase.
  * @returns {boolean}
  */
 function isAuthenticated() {
-  const token = localStorage.getItem(AUTH.TOKEN_KEY);
-  return !!token && token.startsWith('seleto_');
+  return typeof auth !== 'undefined' && auth.currentUser !== null;
 }
 
-/**
- * Salva token de sessão e dados do usuário.
- * @param {string} email
- */
-function saveSession(email) {
-  const token = `seleto_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const user  = { email, name: email.split('@')[0] };
-  localStorage.setItem(AUTH.TOKEN_KEY, token);
-  localStorage.setItem(AUTH.USER_KEY,  JSON.stringify(user));
-}
+// ─── Obtener datos del usuario ───────────────────────────────────────────────
 
 /**
- * Remove token e dados do usuário (logout).
- */
-function clearSession() {
-  localStorage.removeItem(AUTH.TOKEN_KEY);
-  localStorage.removeItem(AUTH.USER_KEY);
-}
-
-/**
- * Retorna o objeto do usuário logado ou null.
- * @returns {{ email: string, name: string } | null}
+ * Retorna el objeto del usuario conectado o null.
+ * @returns {{ email: string, name: string, uid: string } | null}
  */
 function getUser() {
-  try {
-    const raw = localStorage.getItem(AUTH.USER_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  if (typeof auth === 'undefined' || !auth.currentUser) return null;
+  const u = auth.currentUser;
+  return {
+    email: u.email,
+    name:  u.displayName || u.email.split('@')[0],
+    uid:   u.uid,
+  };
 }
 
-// ─── Guards ─────────────────────────────────────────────────────────────────────
+// ─── Guards ──────────────────────────────────────────────────────────────────
 
 /**
- * Deve ser chamado em páginas PROTEGIDAS (vitrine, player).
- * Se o usuário não estiver logado, redireciona ao login.
+ * Debe llamarse en páginas PROTEGIDAS (vitrine, player).
+ * Si el usuario no está conectado, redirige al login.
  */
 function requireAuth() {
   if (!isAuthenticated()) {
-    // Salva a URL atual para redirecionar após o login (UX bonus)
     sessionStorage.setItem('seleto_redirect', window.location.href);
     window.location.replace(AUTH.PAGES.login);
     return false;
@@ -86,8 +62,8 @@ function requireAuth() {
 }
 
 /**
- * Deve ser chamado na página de LOGIN.
- * Se o usuário já estiver logado, redireciona à vitrine.
+ * Debe llamarse en la página de LOGIN.
+ * Si el usuario ya está conectado, redirige a la vitrina.
  */
 function redirectIfLoggedIn() {
   if (isAuthenticated()) {
@@ -95,35 +71,64 @@ function redirectIfLoggedIn() {
   }
 }
 
-// ─── Logout ─────────────────────────────────────────────────────────────────────
+// ─── Login con Firebase ──────────────────────────────────────────────────────
 
 /**
- * Executa logout: limpa sessão e redireciona ao login.
+ * Inicia sesión con correo y contraseña usando Firebase Auth.
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<firebase.auth.UserCredential>}
  */
-function logout() {
-  clearSession();
+async function loginWithEmail(email, password) {
+  return await auth.signInWithEmailAndPassword(email, password);
+}
+
+/**
+ * Registra un nuevo usuario con correo y contraseña.
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<firebase.auth.UserCredential>}
+ */
+async function registerWithEmail(email, password) {
+  return await auth.createUserWithEmailAndPassword(email, password);
+}
+
+// ─── Logout ──────────────────────────────────────────────────────────────────
+
+/**
+ * Cierra sesión en Firebase y redirige al login.
+ */
+async function logout() {
+  await auth.signOut();
   window.location.replace(AUTH.PAGES.login);
 }
 
-// ─── Lógica da Página de Login ──────────────────────────────────────────────────
+// ─── Listener de estado de autenticación ─────────────────────────────────────
 
 /**
- * Inicializa todos os comportamentos da tela de login.
- * Deve ser chamado quando o DOM estiver pronto.
+ * Registra un callback que se ejecuta cada vez que cambia el estado de auth.
+ * @param {Function} callback
+ */
+function onAuthStateChanged(callback) {
+  auth.onAuthStateChanged(callback);
+}
+
+// ─── Lógica de la Página de Login ────────────────────────────────────────────
+
+/**
+ * Inicializa todos los comportamientos de la pantalla de login.
  */
 function initLoginPage() {
-  // Se já logado, vai para a vitrine
-  redirectIfLoggedIn();
+  const form       = document.getElementById('login-form');
+  const emailEl    = document.getElementById('email');
+  const passwordEl = document.getElementById('password');
+  const btn        = document.getElementById('btn-login');
+  const errorEl    = document.getElementById('login-error');
+  const registerBtn= document.getElementById('btn-register');
 
-  const form      = document.getElementById('login-form');
-  const emailEl   = document.getElementById('email');
-  const passwordEl= document.getElementById('password');
-  const btn       = document.getElementById('btn-login');
-  const errorEl   = document.getElementById('login-error');
+  if (!form) return;
 
-  if (!form) return; // Segurança: não está na página de login
-
-  // ── Validação em tempo real ──
+  // ── Validación en tiempo real ──
   [emailEl, passwordEl].forEach(input => {
     input.addEventListener('input', () => {
       input.classList.remove('error');
@@ -131,7 +136,7 @@ function initLoginPage() {
     });
   });
 
-  // ── Submit ──
+  // ── Login ──
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideError();
@@ -139,7 +144,6 @@ function initLoginPage() {
     const email    = emailEl.value.trim();
     const password = passwordEl.value;
 
-    // Validação de campos vazios
     let hasError = false;
     if (!email) {
       emailEl.classList.add('error');
@@ -150,38 +154,66 @@ function initLoginPage() {
       hasError = true;
     }
     if (hasError) {
-      showError('Preencha todos os campos.');
+      showError('Completa todos los campos.');
       return;
     }
 
-    // Loading state
     setLoading(btn, true);
 
-    // Simula latência de rede (200–600ms)
-    await delay(200 + Math.random() * 400);
+    try {
+      await loginWithEmail(email, password);
 
-    // Validação das credenciais
-    if (
-      email    === AUTH.CREDENTIAL.email &&
-      password === AUTH.CREDENTIAL.password
-    ) {
-      saveSession(email);
-      // Redireciona (com possível URL salva)
       const redirect = sessionStorage.getItem('seleto_redirect');
       sessionStorage.removeItem('seleto_redirect');
-      window.location.replace(redirect && !redirect.includes('index') ? redirect : AUTH.PAGES.vitrine);
-    } else {
+      window.location.replace(
+        redirect && !redirect.includes('index') ? redirect : AUTH.PAGES.vitrine
+      );
+
+    } catch (error) {
       setLoading(btn, false);
+      showError(getFirebaseError(error.code));
       emailEl.classList.add('error');
       passwordEl.classList.add('error');
-      showError('E-mail ou senha incorretos. Tente novamente.');
-      // Shake animado no card
-      const card = document.querySelector('.login-card');
-      if (card) shake(card);
+      shake(document.querySelector('.login-card'));
     }
   });
 
-  // ── Helpers da UI ──
+  // ── Registro (si existe el botón) ──
+  if (registerBtn) {
+    registerBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      hideError();
+
+      const email    = emailEl.value.trim();
+      const password = passwordEl.value;
+
+      let hasError = false;
+      if (!email) {
+        emailEl.classList.add('error');
+        hasError = true;
+      }
+      if (!password || password.length < 6) {
+        passwordEl.classList.add('error');
+        hasError = true;
+      }
+      if (hasError) {
+        showError('Correo válido y contraseña mínimo 6 caracteres.');
+        return;
+      }
+
+      setLoading(registerBtn, true);
+
+      try {
+        await registerWithEmail(email, password);
+        showError('¡Cuenta creada! Ahora puedes iniciar sesión.');
+        hideError();
+      } catch (error) {
+        setLoading(registerBtn, false);
+        showError(getFirebaseError(error.code));
+      }
+    });
+  }
+
   function showError(msg) {
     if (errorEl) {
       errorEl.textContent = msg;
@@ -193,14 +225,26 @@ function initLoginPage() {
   }
 }
 
-// ─── Helpers Gerais ─────────────────────────────────────────────────────────────
+// ─── Mapear errores de Firebase ──────────────────────────────────────────────
 
-/** Simula delay assíncrono */
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function getFirebaseError(code) {
+  const errors = {
+    'auth/user-not-found':         'No existe una cuenta con este correo.',
+    'auth/wrong-password':         'Contraseña incorrecta.',
+    'auth/invalid-email':          'El correo electrónico no es válido.',
+    'auth/user-disabled':          'Esta cuenta ha sido deshabilitada.',
+    'auth/too-many-requests':      'Demasiados intentos. Espera unos minutos.',
+    'auth/network-request-failed': 'Error de red. Verifica tu conexión.',
+    'auth/invalid-credential':     'Correo o contraseña incorrectos.',
+    'auth/email-already-in-use':   'Este correo ya está registrado.',
+    'auth/weak-password':          'La contraseña debe tener al menos 6 caracteres.',
+    'auth/operation-not-allowed':  'Este método de inicio de sesión no está habilitado.',
+  };
+  return errors[code] || 'Error al iniciar sesión. Inténtalo de nuevo.';
 }
 
-/** Alterna o estado de loading de um botão */
+// ─── Helpers Generales ───────────────────────────────────────────────────────
+
 function setLoading(btn, isLoading) {
   if (!btn) return;
   if (isLoading) {
@@ -212,8 +256,8 @@ function setLoading(btn, isLoading) {
   }
 }
 
-/** Animação de shake para erros */
 function shake(el) {
+  if (!el) return;
   el.animate(
     [
       { transform: 'translateX(0)' },
@@ -227,8 +271,8 @@ function shake(el) {
   );
 }
 
-// ─── Exporta para o escopo global ───────────────────────────────────────────────
-// (sem módulos ES — compatibilidade estática / GitHub Pages)
+// ─── Exporta al scope global ─────────────────────────────────────────────────
+
 window.AUTH_UTILS = {
   isAuthenticated,
   requireAuth,
@@ -236,11 +280,14 @@ window.AUTH_UTILS = {
   getUser,
   logout,
   initLoginPage,
+  onAuthStateChanged,
+  loginWithEmail,
+  registerWithEmail,
 };
 
-// ─── Auto-inicialização ─────────────────────────────────────────────────────────
+// ─── Auto-inicialización ─────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Se estivermos na página de login, inicializa
   if (document.getElementById('login-form')) {
     initLoginPage();
   }

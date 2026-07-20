@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="es">
 <head>
   <!-- =====================================================
        SELETO — Plataforma de Streaming
@@ -8,9 +8,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- SEO (dinâmico via JS) -->
-  <title>Assistindo... — SELETO</title>
-  <meta name="description" content="Assista filmes premium na SELETO em qualidade cinematográfica." />
+  <!-- SEO (dinámico vía JS) -->
+  <title>Reproduciendo... — SELETO</title>
+  <meta name="description" content="Mira películas premium en SELETO en calidad cinematográfica." />
   <meta name="theme-color" content="#000000" />
   <meta name="robots" content="noindex, nofollow" />
 
@@ -20,9 +20,9 @@
   <!-- Estilos -->
   <link rel="stylesheet" href="assets/css/style.css" />
 
-  <!-- Estilos específicos do player (inline para evitar FOUC) -->
+  <!-- Estilos específicos del player (inline para evitar FOUC) -->
   <style>
-    /* Fundo ainda mais escuro na página do player */
+    /* Fondo aún más oscuro en la página del player */
     body {
       background: linear-gradient(180deg, #000 0%, #0d0202 40%, #1a0606 100%);
     }
@@ -48,13 +48,13 @@
       outline: none;
     }
 
-    /* Linha vermelha de progresso customizada (apenas estética, não substitui os controles) */
+    /* Línea roja de progreso personalizada (solo estética, no reemplaza los controles) */
     video#main-video:focus-visible {
       outline: 2px solid var(--accent-primary);
       outline-offset: 2px;
     }
 
-    /* ── Card de informações ── */
+    /* ── Tarjeta de información ── */
     .player-info-wrap {
       max-width: 1200px;
       margin: 0 auto;
@@ -99,7 +99,7 @@
       color: #f0a500;
     }
 
-    /* ── Seção relacionados ── */
+    /* ── Sección relacionados ── */
     .related-wrap {
       max-width: 1200px;
       margin: 0 auto;
@@ -111,7 +111,7 @@
       .related-wrap     { padding: 0 16px 40px; }
     }
 
-    /* Botão voltar com ícone animado */
+    /* Botón volver con ícono animado */
     #btn-voltar svg {
       transition: transform 0.2s ease;
     }
@@ -126,75 +126,81 @@
        HEADER
   ────────────────────────────────────── -->
   <header class="player-header" role="banner">
-    <!-- Botão Voltar -->
-    <button id="btn-voltar" class="btn btn-secondary" aria-label="Voltar ao catálogo">
+    <!-- Botón Volver -->
+    <button id="btn-voltar" class="btn btn-secondary" aria-label="Volver al catálogo">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
            aria-hidden="true">
         <line x1="19" y1="12" x2="5" y2="12"/>
         <polyline points="12 19 5 12 12 5"/>
       </svg>
-      Voltar
+      Volver
     </button>
 
     <!-- Logo -->
-    <a href="vitrine.html" class="logo-link" aria-label="SELETO – página inicial">
+    <a href="vitrine.html" class="logo-link" aria-label="SELETO – página principal">
       <img src="assets/SELETO LOGO.png" alt="SELETO" class="logo-img" />
     </a>
 
-    <!-- Placeholder para simetria visual (mobile) -->
+    <!-- Placeholder para simetría visual (mobile) -->
     <div style="width:90px;" aria-hidden="true"></div>
   </header>
 
 
   <!-- ──────────────────────────────────────
-       ÁREA DO VÍDEO
+       ÁREA DEL VÍDEO
   ────────────────────────────────────── -->
   <section id="player-stage" class="player-stage" aria-label="Player de vídeo">
     <div class="video-container">
-      <!--
-        O src é definido dinamicamente por player.js.
-        autoplay: reproduz automaticamente (pode ser bloqueado por políticas do browser).
-        controls: exibe os controles nativos do navegador.
-        preload: carrega metadados para exibir duração imediata.
-      -->
+      <!-- Vídeo nativo (para URLs .mp4 directas) -->
       <video
         id="main-video"
         controls
         autoplay
         preload="metadata"
         playsinline
-        aria-label="Vídeo do filme"
+        aria-label="Vídeo de la película"
       >
-        Seu navegador não suporta o elemento de vídeo HTML5.
-        <a href="vitrine.html">Voltar ao catálogo</a>
+        Tu navegador no soporta el elemento de vídeo HTML5.
+        <a href="vitrine.html">Volver al catálogo</a>
       </video>
+
+      <!-- Iframe (para Google Drive y otros) -->
+      <div id="video-iframe-wrap" style="display:none; position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
+        <iframe
+          id="main-iframe"
+          style="position:absolute; top:0; left:0; width:100%; height:100%;"
+          allow="autoplay"
+          allowfullscreen
+          aria-label="Vídeo de la película"
+        ></iframe>
+      </div>
     </div>
   </section>
 
 
   <!-- ──────────────────────────────────────
-       INFORMAÇÕES DO FILME
+       INFORMACIÓN DE LA PELÍCULA
   ────────────────────────────────────── -->
   <div class="player-info-wrap">
-    <article class="player-info-card glass-panel" aria-label="Informações do filme">
+    <article class="player-info-card glass-panel" aria-label="Información de la película">
 
-      <!-- Breadcrumb / navegação -->
-      <nav class="player-breadcrumb" aria-label="Caminho de navegação">
+      <!-- Breadcrumb / navegación -->
+      <nav class="player-breadcrumb" aria-label="Ruta de navegación">
         <a href="vitrine.html">Catálogo</a>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" aria-hidden="true">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
-        <span id="breadcrumb-title" aria-current="page">Carregando...</span>
+        <span id="breadcrumb-title" aria-current="page">Cargando...</span>
       </nav>
 
       <!-- Título -->
-      <h1 id="player-title" class="player-title">Carregando...</h1>
+      <h1 id="player-title" class="player-title">Cargando...</h1>
 
       <!-- Meta Chips -->
-      <div class="meta-chips" aria-label="Informações do filme">
-        <span class="meta-chip primary" aria-label="Gênero">
+      <div class="meta-chips" aria-label="Información de la película">
+        <span class="meta-chip primary" aria-label="Género">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" aria-hidden="true">
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
@@ -202,7 +208,7 @@
           <span id="player-genero">—</span>
         </span>
 
-        <span class="meta-chip neutral" aria-label="Ano de lançamento">
+        <span class="meta-chip neutral" aria-label="Año de estreno">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -213,7 +219,7 @@
           <span id="player-ano">—</span>
         </span>
 
-        <span class="meta-chip neutral" aria-label="Duração">
+        <span class="meta-chip neutral" aria-label="Duración">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="10"/>
@@ -222,7 +228,7 @@
           <span id="player-duracao">—</span>
         </span>
 
-        <span class="meta-chip gold" aria-label="Avaliação">
+        <span class="meta-chip gold" aria-label="Valoración">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
           </svg>
@@ -230,9 +236,9 @@
         </span>
       </div>
 
-      <!-- Sinopse -->
+      <!-- Sinopsis -->
       <p id="player-description" class="player-description">
-        Carregando sinopse...
+        Cargando sinopsis...
       </p>
 
     </article>
@@ -240,22 +246,22 @@
 
 
   <!-- ──────────────────────────────────────
-       FILMES RELACIONADOS
+       PELÍCULAS RELACIONADAS
   ────────────────────────────────────── -->
   <div class="related-wrap">
     <div class="divider" aria-hidden="true"></div>
 
-    <section class="related-section" aria-label="Filmes relacionados">
+    <section class="related-section" aria-label="Películas relacionadas">
       <div class="section-header">
-        <h2 class="section-title">Você Também Pode Gostar</h2>
+        <h2 class="section-title">También Te Puede Gustar</h2>
       </div>
       <div
         id="related-grid"
         class="related-grid"
         role="list"
-        aria-label="Filmes relacionados"
+        aria-label="Películas relacionadas"
       >
-        <!-- Renderizado dinamicamente por player.js -->
+        <!-- Renderizado dinámicamente por player.js -->
       </div>
     </section>
   </div>
@@ -263,12 +269,22 @@
 
   <!-- ──────────────────────────────────────
        SCRIPTS
-       ORDEM: auth.js → player.js
+       ORDEN: Firebase SDK → firebase-config → auth.js → player.js
   ────────────────────────────────────── -->
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- Configuración de Firebase -->
+  <script src="assets/js/firebase-config.js"></script>
+
+  <!-- Lógica de autenticación -->
   <script src="assets/js/auth.js"></script>
+
+  <!-- Lógica del player -->
   <script src="assets/js/player.js"></script>
 
-  <!-- Micro-interação: cursor personalizado sobre o vídeo -->
+  <!-- Micro-interacción: cursor personalizado sobre el vídeo -->
   <script>
     (function () {
       const videoEl = document.getElementById('main-video');
@@ -277,7 +293,7 @@
       let hideTimer;
       const stage = videoEl.closest('.player-stage') || videoEl.parentElement;
 
-      // Esconde cursor após 3s de inatividade sobre o vídeo
+      // Oculta cursor tras 3s de inactividad sobre el vídeo
       stage.addEventListener('mousemove', () => {
         stage.style.cursor = 'default';
         clearTimeout(hideTimer);
@@ -286,7 +302,7 @@
         }, 3000);
       });
 
-      // Mostra cursor ao pausar
+      // Muestra cursor al pausar
       videoEl.addEventListener('pause', () => {
         stage.style.cursor = 'default';
         clearTimeout(hideTimer);
