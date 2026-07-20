@@ -18,22 +18,6 @@
 // el array definido en vitrine.js vía window.SELETO_VITRINE.MOVIES_DB,
 // pero como player.html puede cargarse sin vitrine.js, lo definimos aquí también.
 const PLAYER_MOVIES_DB = [
-  { id: 1,  titulo: 'Aventura Sombria',        genero: 'Acción',             ano: 2024, avaliacao: 8.4, duracao: '2h 18m', capa: 'https://picsum.photos/300/450?random=101', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Un viaje épico por tierras desconocidas donde cada sombra esconde un secreto mortal.' },
-  { id: 2,  titulo: 'El Último Nexus',           genero: 'Ficción Científica', ano: 2023, avaliacao: 9.1, duracao: '2h 34m', capa: 'https://picsum.photos/300/450?random=202', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Cuando la última conexión entre mundos paralelos está amenazada, un solo hombre debe salvar el multiverso.' },
-  { id: 3,  titulo: 'Ciudad de los Sueños',     genero: 'Drama',              ano: 2024, avaliacao: 7.8, duracao: '1h 58m', capa: 'https://picsum.photos/300/450?random=303', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'En las calles luminosas de Neo-Lisboa, una artista busca su identidad en un mundo que olvidó soñar.' },
-  { id: 4,  titulo: 'Proyecto Aurora',          genero: 'Suspense',           ano: 2023, avaliacao: 8.7, duracao: '2h 05m', capa: 'https://picsum.photos/300/450?random=404', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Un experimento secreto del gobierno amenaza desbordarse a la realidad. El tiempo se está acabando.' },
-  { id: 5,  titulo: 'Fragmentos del Pasado',    genero: 'Drama',              ano: 2022, avaliacao: 8.2, duracao: '1h 47m', capa: 'https://picsum.photos/300/450?random=505', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Recuerdos fragmentados de toda una vida revelan una verdad que nadie estaba preparado para escuchar.' },
-  { id: 6,  titulo: 'El Código Rojo',           genero: 'Thriller',           ano: 2024, avaliacao: 8.9, duracao: '2h 12m', capa: 'https://picsum.photos/300/450?random=606', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Un mensaje cifrado lleva a un detective al centro de una conspiración global implacable.' },
-  { id: 7,  titulo: 'Más Allá del Horizonte',   genero: 'Aventura',           ano: 2023, avaliacao: 7.6, duracao: '2h 01m', capa: 'https://picsum.photos/300/450?random=707', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Una expedición audaz al corazón de la Amazonia esconde revelaciones que cambiarán la historia de la humanidad.' },
-  { id: 8,  titulo: 'Noche Eterna',             genero: 'Terror',             ano: 2024, avaliacao: 8.5, duracao: '1h 53m', capa: 'https://picsum.photos/300/450?random=808', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Cuando el sol se puso por última vez, los sobrevivientes descubrieron que la oscuridad trajo consigo algo ancestral.' },
-  { id: 9,  titulo: 'Vértice Cero',             genero: 'Acción',             ano: 2023, avaliacao: 8.0, duracao: '2h 20m', capa: 'https://picsum.photos/300/450?random=909', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'En un mundo donde la gravedad colapsa en zonas aleatorias, un piloto debe cruzar el caos para salvar a su hija.' },
-  { id: 10, titulo: 'La Última Profecía',       genero: 'Fantasía',           ano: 2022, avaliacao: 9.3, duracao: '2h 48m', capa: 'https://picsum.photos/300/450?random=110', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Escrita hace mil años, la profecía nunca fue comprendida — hasta que una joven vidente nace con el don de leerla.' },
-  { id: 11, titulo: 'Pulsar',                   genero: 'Ficción Científica', ano: 2024, avaliacao: 7.9, duracao: '1h 44m', capa: 'https://picsum.photos/300/450?random=211', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'En 2087, una anomalía electromagnética comienza a reescribir los recuerdos de toda la población de una metrópolis.' },
-  { id: 12, titulo: 'Sangre y Corona',          genero: 'Drama Histórico',    ano: 2023, avaliacao: 8.6, duracao: '2h 30m', capa: 'https://picsum.photos/300/450?random=312', url: 'https://www.w3schools.com/html/mov_bbb.mp4',  descricao: 'Traición, amor y poder se entrelazan en la corte más peligrosa de la Europa medieval. Solo uno sobrevivirá.' },
-  { id: 13, titulo: 'Matrix',                   genero: 'Acción',             ano: 1999, avaliacao: 8.7, duracao: '2h 16m', capa: 'CAPAS DOS FILMES/matrix.jpg',        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',  descricao: 'Un hacker descubre que la realidad es una simulación creada por máquinas para subyugar a la humanidad.' },
-  { id: 14, titulo: 'El Origen',                genero: 'Ficción Científica', ano: 2010, avaliacao: 8.8, duracao: '2h 28m', capa: 'CAPAS DOS FILMES/a origem.jpg',      url: 'https://drive.google.com/file/d/1XW5guEn38LX8qPcBFA_611tfxuM6dU80/preview',  descricao: 'Un ladrón especializado en extraer secretos del subconsciente recibe una misión imposible: plantar una idea en la mente de alguien.' },
-  { id: 15, titulo: 'La Lista de Schindler',    genero: 'Drama Histórico',    ano: 1993, avaliacao: 9.0, duracao: '3h 15m', capa: 'CAPAS DOS FILMES/A Lista de Schindler.jpg', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', descricao: 'El empresario alemán Oskar Schindler salva la vida de más de mil judíos polacos durante el Holocausto.' },
-  { id: 16, titulo: 'Interstellar',             genero: 'Ficción Científica', ano: 2014, avaliacao: 8.6, duracao: '2h 49m', capa: 'CAPAS DOS FILMES/interestelar.jpg',  url: 'https://drive.google.com/file/d/1XW5guEn38LX8qPcBFA_611tfxuM6dU80/preview',  descricao: 'Un grupo de astronautas viaja a través de un agujero de gusano en busca de un nuevo hogar para la humanidad.' },
 ];
 
 // ─── Inicialización ──────────────────────────────────────────────────────────────
@@ -74,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 async function loadMoviesFromFilePlayer() {
   try {
-    const response = await fetch('../filmes.txt');
+    const response = await fetch('filmes.txt?' + Date.now());
     if (!response.ok) throw new Error('Archivo no encontrado');
 
     const text = await response.text();
@@ -123,12 +107,34 @@ async function loadMoviesFromFilePlayer() {
  */
 function findCoverByTitlePlayer(titulo) {
   const coverMap = {
-    'matrix':                       'CAPAS DOS FILMES/matrix.jpg',
-    'el origen':                    'CAPAS DOS FILMES/a origem.jpg',
-    'origen':                       'CAPAS DOS FILMES/a origem.jpg',
-    'interstellar':                 'CAPAS DOS FILMES/interestelar.jpg',
-    'la lista de schindler':        'CAPAS DOS FILMES/A Lista de Schindler.jpg',
-    'lista de schindler':           'CAPAS DOS FILMES/A Lista de Schindler.jpg',
+    'la lista de schindler':        'capasmovies/La lista de Schindler.jpg',
+    'el origen':                    'capasmovies/El Origen.jpg',
+    'el club de la pelea':          'capasmovies/El club de la pelea.jpg',
+    'matrix':                       'capasmovies/Matrix.jpg',
+    'gladiador':                    'capasmovies/Gladiador.jpg',
+    'whiplash':                     'capasmovies/Whiplash.jpg',
+    'parásitos':                    'capasmovies/Parásitos.jpg',
+    'los infiltrados':              'capasmovies/Los Infiltrados.jpg',
+    'django sin cadenas':           'capasmovies/Django sin cadenas.jpg',
+    'el gran truco':                'capasmovies/El Gran Truco.jpg',
+    'intocable':                    'capasmovies/Intocable.jpg',
+    'wall·e':                       'capasmovies/WALL·E.jpg',
+    'wall-e':                       'capasmovies/WALL·E.jpg',
+    'bastardos sin gloria':         'capasmovies/Bastardos sin gloria.jpg',
+    'up una aventura de altura':    'capasmovies/Up una aventura de altura.jpg',
+    'el rey león':                  'capasmovies/El rey león.jpg',
+    'duro de matar':                'capasmovies/Duro de matar.jpg',
+    'proyecto fin del mundo':       'capasmovies/Proyecto Fin del mundo.jpg',
+    'interestelar':                 'capasmovies/Interestelar.jpg',
+    '1917':                         'capasmovies/1917.jpg',
+    'indiana jones y la última cruzada': 'capasmovies/Indiana jones y la última cruzada.jpg',
+    'la isla siniestra':            'capasmovies/La isla siniestra.jpg',
+    'sin lugar para los débiles':   'capasmovies/Sin lugar para los débiles.jpg',
+    'petróleo sangriento':          'capasmovies/Petróleo sangriento.jpg',
+    'top gun maverick':             'capasmovies/Top Gun Maverick.jpg',
+    'los horrores de caddo lake':   'capasmovies/Los Horrores de Caddo Lake.jpg',
+    'relay el intermediario':       'capasmovies/Relay El Intermediario.jpg',
+    'like minds':                   'capasmovies/Like Minds.jpg',
   };
 
   const lower = titulo.toLowerCase().trim();

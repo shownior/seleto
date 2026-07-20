@@ -205,7 +205,6 @@
       <!-- Cabecera de la sección -->
       <div class="section-header">
         <h2 class="section-title">Todas las Películas</h2>
-        <span class="results-count" id="results-count" aria-live="polite" aria-atomic="true"></span>
       </div>
 
       <!-- Barra de filtros + búsqueda -->
@@ -291,7 +290,7 @@
     <a href="vitrine.html" class="logo-link" aria-label="SELETO">
       <img src="assets/SELETO LOGO.png" alt="SELETO" class="logo-img" style="height:28px;" />
     </a>
-    <p style="margin-top:8px;">© 2024 SELETO Streaming. Todos los derechos reservados.</p>
+    <p style="margin-top:8px;">© 2026 SELETO MOVIES Todos los derechos reservados.</p>
   </footer>
 
 
@@ -314,34 +313,15 @@
   <!-- Actualiza contador de resultados y ajusta accesibilidad de los filtros -->
   <script>
     (function () {
-      // Observa cambios en el grid para actualizar el contador
-      const grid    = document.getElementById('movies-grid');
-      const counter = document.getElementById('results-count');
       const filterBtns = document.querySelectorAll('[data-filter]');
-
-      function updateCounter() {
-        if (!grid || !counter) return;
-        const count = grid.querySelectorAll('.movie-card').length;
-        counter.textContent = count > 0 ? `${count} título${count !== 1 ? 's' : ''}` : '';
-      }
 
       // Actualiza aria-pressed en los filtros
       filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
           filterBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
           btn.setAttribute('aria-pressed', 'true');
-          // Delay mínimo para que el DOM se actualice
-          setTimeout(updateCounter, 100);
         });
       });
-
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) {
-        searchInput.addEventListener('input', () => setTimeout(updateCounter, 350));
-      }
-
-      // Conteo inicial después del render
-      setTimeout(updateCounter, 700);
     })();
   </script>
 

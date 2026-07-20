@@ -973,6 +973,10 @@ body::before {
     padding: 24px 20px;
   }
 
+  .hero-banner .hero-text > div {
+    justify-content: center;
+  }
+
   .hero-text p { font-size: 0.85rem; }
 
   .vitrine-main { padding: 20px 16px 48px; }
