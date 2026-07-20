@@ -137,6 +137,24 @@ body::before {
   color: var(--text-primary);
 }
 
+/* Logo com imagem */
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+  transition: var(--transition-fast);
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 12px rgba(179, 27, 27, 0.6));
+}
+
 /* --- Botões --- */
 .btn {
   display: inline-flex;
@@ -337,10 +355,14 @@ body::before {
   margin-bottom: 40px;
 }
 
-.login-header .logo {
-  font-size: 2.4rem;
+.login-header .logo-link {
   display: block;
   margin-bottom: 12px;
+  text-align: center;
+}
+
+.login-header .logo-img {
+  height: 60px;
 }
 
 .login-header p {
@@ -432,7 +454,7 @@ body::before {
   box-shadow: 0 4px 30px rgba(0,0,0,0.5);
 }
 
-.vitrine-header .logo {
+.vitrine-header .logo-link {
   font-size: 1.6rem;
 }
 
@@ -781,7 +803,7 @@ body::before {
   flex-shrink: 0;
 }
 
-.player-header .logo { font-size: 1.4rem; }
+.player-header .logo-link { font-size: 1.4rem; }
 
 /* --- Área de Vídeo --- */
 .player-stage {
