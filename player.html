@@ -453,58 +453,58 @@
           || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
       }
 
-      // Gira a tela para landscape (horizontal)
       function lockLandscape() {
         if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(function () {
-            // Ignora erro - algumas browsers bloqueiam
-          });
+          screen.orientation.lock('landscape').catch(function () {});
         }
       }
 
-      // Sai da rotação forçada
       function unlockOrientation() {
         if (screen.orientation && screen.orientation.unlock) {
           screen.orientation.unlock();
         }
       }
 
+      function requestFullscreen(el) {
+        if (el.requestFullscreen) {
+          el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        } else if (el.webkitEnterFullscreen) {
+          el.webkitEnterFullscreen();
+        }
+      }
+
       let hasAutoFullscreen = false;
+
+      // Quando entrar em fullscreen, trava landscape
+      function onFullscreenChange() {
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          setTimeout(lockLandscape, 200);
+        } else {
+          unlockOrientation();
+        }
+      }
+
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
       videoEl.addEventListener('play', function onFirstPlay() {
         if (!isMobile() || hasAutoFullscreen) return;
         hasAutoFullscreen = true;
 
-        // Passo 1: Gira a tela imediatamente
-        lockLandscape();
+        // Passo 1: Entra em tela cheia PRIMEIRO
+        const container = videoEl.closest('.video-container') || videoEl.parentElement;
+        requestFullscreen(container);
 
-        // Passo 2: Após 800ms, ativa tela cheia
-        setTimeout(function () {
-          const container = videoEl.closest('.video-container') || videoEl.parentElement;
+        // Passo 2: Vibra para feedback tátil
+        if (navigator.vibrate) navigator.vibrate(30);
 
-          if (container.requestFullscreen) {
-            container.requestFullscreen();
-          } else if (container.webkitRequestFullscreen) {
-            container.webkitRequestFullscreen();
-          } else if (container.webkitEnterFullscreen) {
-            container.webkitEnterFullscreen();
-          }
-
-          // Passo 3: Tenta travar landscape novamente (após fullscreen)
-          setTimeout(lockLandscape, 300);
-
-          if (navigator.vibrate) navigator.vibrate(30);
-        }, 800);
+        // Passo 3: Trava landscape (será chamado no fullscreenchange)
+        // Fallback: tenta travar direto (funciona em alguns Androids)
+        setTimeout(lockLandscape, 500);
 
         videoEl.removeEventListener('play', onFirstPlay);
-      });
-
-      // Quando sair da fullscreen, destrava a orientação
-      document.addEventListener('fullscreenchange', function () {
-        if (!document.fullscreenElement) unlockOrientation();
-      });
-      document.addEventListener('webkitfullscreenchange', function () {
-        if (!document.webkitFullscreenElement) unlockOrientation();
       });
     })();
   </script>
