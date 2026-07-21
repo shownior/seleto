@@ -398,7 +398,6 @@ function renderRelatedMovies(currentMovie) {
           onerror="this.src='https://picsum.photos/300/450?random=${movie.id + 80}'"
         />
         <div class="movie-thumb-overlay"></div>
-        <div class="movie-badge">${movie.genero}</div>
         <div class="play-overlay" aria-hidden="true">
           <div class="play-icon">
             <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>

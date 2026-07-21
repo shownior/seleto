@@ -443,10 +443,61 @@
   </script>
 
   <!-- Tela cheia + rotação automática no mobile ao dar play -->
+  <style>
+    #ios-fullscreen-btn {
+      display: none;
+      position: fixed;
+      bottom: 28px;
+      right: 20px;
+      z-index: 9999;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), #8b0000);
+      border: 2px solid rgba(255,255,255,0.25);
+      box-shadow: 0 4px 20px rgba(179,27,27,0.6);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      animation: fadeInScale 0.4s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #ios-fullscreen-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @media (min-width: 900px) {
+      #ios-fullscreen-btn { display: none !important; }
+    }
+  </style>
+
+  <!-- Botão flutuante fullscreen (iOS) -->
+  <button id="ios-fullscreen-btn" aria-label="Tela cheia">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 3 21 3 21 9"/>
+      <polyline points="9 21 3 21 3 15"/>
+      <line x1="21" y1="3" x2="14" y2="10"/>
+      <line x1="3" y1="21" x2="10" y2="14"/>
+    </svg>
+  </button>
+
   <script>
     (function () {
       const videoEl = document.getElementById('main-video');
       if (!videoEl) return;
+
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent)
+          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      }
 
       function isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -475,36 +526,59 @@
         }
       }
 
-      let hasAutoFullscreen = false;
+      // ── Botão flutuante iOS ──
+      const iosBtn = document.getElementById('ios-fullscreen-btn');
+      let isFullscreen = false;
 
-      // Quando entrar em fullscreen, trava landscape
       function onFullscreenChange() {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
+        isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (isFullscreen) {
           setTimeout(lockLandscape, 200);
+          if (iosBtn) iosBtn.style.display = 'none';
         } else {
           unlockOrientation();
+          // Mostra o botão novamente se ainda estiver no mobile e vídeo tocando
+          if (isIOS() && isMobile() && !videoEl.paused) {
+            iosBtn.style.display = 'flex';
+          }
         }
       }
 
       document.addEventListener('fullscreenchange', onFullscreenChange);
       document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
+      // Clique no botão → entra em fullscreen
+      if (iosBtn) {
+        iosBtn.addEventListener('click', function () {
+          requestFullscreen(videoEl);
+          if (navigator.vibrate) navigator.vibrate(20);
+        });
+      }
+
+      // ── Play automático ──
+      let hasAutoFullscreen = false;
+
       videoEl.addEventListener('play', function onFirstPlay() {
         if (!isMobile() || hasAutoFullscreen) return;
         hasAutoFullscreen = true;
 
-        // Passo 1: Entra em tela cheia PRIMEIRO
-        const container = videoEl.closest('.video-container') || videoEl.parentElement;
-        requestFullscreen(container);
+        if (isIOS()) {
+          // iOS: mostra botão flutuante (fullscreen manual)
+          if (iosBtn) iosBtn.style.display = 'flex';
+        } else {
+          // Android/outros: entra fullscreen automaticamente
+          const container = videoEl.closest('.video-container') || videoEl.parentElement;
+          requestFullscreen(container);
+          setTimeout(lockLandscape, 500);
+        }
 
-        // Passo 2: Vibra para feedback tátil
         if (navigator.vibrate) navigator.vibrate(30);
-
-        // Passo 3: Trava landscape (será chamado no fullscreenchange)
-        // Fallback: tenta travar direto (funciona em alguns Androids)
-        setTimeout(lockLandscape, 500);
-
         videoEl.removeEventListener('play', onFirstPlay);
+      });
+
+      // Pausa → esconde botão
+      videoEl.addEventListener('pause', function () {
+        if (iosBtn && isFullscreen) iosBtn.style.display = 'none';
       });
     })();
   </script>
