@@ -53,8 +53,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Parsear Sinopsis.txt ─────────────────────────────────────────────────────
 
 /**
+ * Normaliza un título para facilitar la comparación.
+ * @param {string} titulo
+ * @returns {string}
+ */
+function normalizarTituloPlayer(titulo) {
+  return titulo
+    .replace(/\s*\(.*?\)\s*/g, '')
+    .replace(/[,\.]/g, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Lee el archivo Sinopsis.txt y construye un mapa con los datos de cada película.
- * @returns {Promise<Object>} Mapa { tituloLower: { ano, avaliacao, descricao } }
+ * @returns {Promise<Object>} Mapa { tituloNormalizado: { ano, avaliacao, descricao } }
  */
 async function loadSinopsisDataPlayer() {
   const sinopsisMap = {};
@@ -82,9 +98,7 @@ async function loadSinopsisDataPlayer() {
         descricao = sinopsisLine.replace(/^Sinopsis:\s*/i, '').trim();
       }
 
-      const tituloLimpio = tituloRaw.replace(/\s*\(.*?\)\s*/g, '').trim();
-      const key = tituloLimpio.toLowerCase();
-
+      const key = normalizarTituloPlayer(tituloRaw);
       sinopsisMap[key] = { ano, avaliacao, descricao };
     });
 
@@ -123,7 +137,7 @@ async function loadMoviesFromFilePlayer() {
       const exists = PLAYER_MOVIES_DB.some(m => m.titulo.toLowerCase() === titulo.toLowerCase());
       if (exists) return;
 
-      const key = titulo.toLowerCase().trim();
+      const key = normalizarTituloPlayer(titulo);
       const sinopsis = sinopsisData[key] || {};
 
       const capa = findCoverByTitlePlayer(titulo);

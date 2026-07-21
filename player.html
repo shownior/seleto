@@ -49,6 +49,52 @@
       outline: none;
     }
 
+    /* Controles menores no mobile */
+    @media (max-width: 600px) {
+      video#main-video {
+        max-height: 50vh;
+      }
+
+      /* WebKit/Safari/Chrome */
+      video#main-video::-webkit-media-controls-panel {
+        padding: 4px 8px !important;
+      }
+
+      video#main-video::-webkit-media-controls-play-button {
+        transform: scale(0.75) !important;
+        margin: 0 4px !important;
+      }
+
+      video#main-video::-webkit-media-controls-current-time-display,
+      video#main-video::-webkit-media-controls-time-remaining-display {
+        font-size: 10px !important;
+        padding: 0 4px !important;
+      }
+
+      video#main-video::-webkit-media-controls-timeline {
+        height: 14px !important;
+        margin: 0 4px !important;
+      }
+
+      video#main-video::-webkit-media-controls-fullscreen-button {
+        transform: scale(0.75) !important;
+      }
+
+      video#main-video::-webkit-media-controls-mute-button {
+        transform: scale(0.75) !important;
+      }
+
+      /* Firefox */
+      video#main-video::-moz-range-thumb {
+        width: 10px !important;
+        height: 10px !important;
+      }
+
+      video#main-video::-moz-range-track {
+        height: 3px !important;
+      }
+    }
+
     /* Iframe wrapper */
     #video-iframe-wrap {
       position: relative;
@@ -244,6 +290,7 @@
         autoplay
         preload="metadata"
         playsinline
+        controlsList="nodownload noplaybackrate"
         aria-label="Vídeo de la película"
       >
         Tu navegador no soporta el elemento de vídeo HTML5.
@@ -391,6 +438,48 @@
       videoEl.addEventListener('pause', () => {
         stage.style.cursor = 'default';
         clearTimeout(hideTimer);
+      });
+    })();
+  </script>
+
+  <!-- Tela cheia automática no mobile ao dar play -->
+  <script>
+    (function () {
+      const videoEl = document.getElementById('main-video');
+      if (!videoEl) return;
+
+      // Detecta se é dispositivo móvel
+      function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+      }
+
+      let hasAutoFullscreen = false;
+
+      videoEl.addEventListener('play', function onFirstPlay() {
+        if (!isMobile() || hasAutoFullscreen) return;
+        hasAutoFullscreen = true;
+
+        // Espera 1 segundo e entra em tela cheia
+        setTimeout(function () {
+          const container = videoEl.closest('.video-container') || videoEl.parentElement;
+
+          // Tenta usar a API de Fullscreen
+          if (container.requestFullscreen) {
+            container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+          } else if (container.webkitEnterFullscreen) {
+            container.webkitEnterFullscreen();
+          }
+
+          // Vibrar leve para feedback tátil
+          if (navigator.vibrate) navigator.vibrate(30);
+
+        }, 1000);
+
+        // Remove o listener após primeiro play
+        videoEl.removeEventListener('play', onFirstPlay);
       });
     })();
   </script>

@@ -53,13 +53,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Parsear Sinopsis.txt ─────────────────────────────────────────────────────
 
 /**
+ * Normaliza un título para facilitar la comparación.
+ * Elimina paréntesis, comas, puntos, acentos extra y convierte a minúsculas.
+ * @param {string} titulo
+ * @returns {string}
+ */
+function normalizarTitulo(titulo) {
+  return titulo
+    .replace(/\s*\(.*?\)\s*/g, '')   // Eliminar paréntesis y su contenido
+    .replace(/[,\.]/g, '')           // Eliminar comas y puntos
+    .normalize('NFD')                // Descomponer acentos
+    .replace(/[\u0300-\u036f]/g, '') // Eliminar marcas de acento
+    .toLowerCase()
+    .replace(/\s+/g, ' ')           // Espacios múltiples a uno
+    .trim();
+}
+
+/**
  * Lee el archivo Sinopsis.txt y construye un mapa con los datos de cada película.
  * Formato esperado:
  *   N. Titulo (Titulo Original) - Ano ⭐ Nota
  *
  *   Sinopsis: Texto de la sinopsis...
  *
- * @returns {Promise<Object>} Mapa { tituloLower: { ano, avaliacao, descricao } }
+ * @returns {Promise<Object>} Mapa { tituloNormalizado: { ano, avaliacao, descricao } }
  */
 async function loadSinopsisData() {
   const sinopsisMap = {};
@@ -68,14 +85,12 @@ async function loadSinopsisData() {
     if (!response.ok) throw new Error('Archivo no encontrado');
 
     const text = await response.text();
-    // Separa cada película por líneas vacías dobles o por el patrón de número
     const blocks = text.split(/\n\n+/);
 
     blocks.forEach(block => {
       const lines = block.trim().split('\n');
       if (lines.length === 0) return;
 
-      // Primera línea: "1. La Lista de Schindler (Schindler's List) - 1993 ⭐ 9.0"
       const headerMatch = lines[0].match(/^\d+\.\s+(.+?)\s*-\s*(\d{4})\s*⭐\s*([\d.]+)/);
       if (!headerMatch) return;
 
@@ -83,17 +98,13 @@ async function loadSinopsisData() {
       const ano = parseInt(headerMatch[2], 10);
       const avaliacao = parseFloat(headerMatch[3]);
 
-      // Extraer sinopsis: busca línea que empiece con "Sinopsis:"
       let descricao = '';
       const sinopsisLine = lines.find(l => l.trim().startsWith('Sinopsis:'));
       if (sinopsisLine) {
         descricao = sinopsisLine.replace(/^Sinopsis:\s*/i, '').trim();
       }
 
-      // Guardar con clave normalizada (sin parentesis del titulo original)
-      const tituloLimpio = tituloRaw.replace(/\s*\(.*?\)\s*/g, '').trim();
-      const key = tituloLimpio.toLowerCase();
-
+      const key = normalizarTitulo(tituloRaw);
       sinopsisMap[key] = { ano, avaliacao, descricao };
     });
 
@@ -111,7 +122,6 @@ async function loadSinopsisData() {
  * Formato esperado por línea: nombre de la película | enlace de Google Drive
  */
 async function loadMoviesFromFile() {
-  // Cargar datos de sinopsis primero
   const sinopsisData = await loadSinopsisData();
 
   try {
@@ -130,15 +140,12 @@ async function loadMoviesFromFile() {
       const titulo = parts[0];
       const url = parts[1];
 
-      // Verificar si ya existe película con mismo título
       const exists = MOVIES_DB.some(m => m.titulo.toLowerCase() === titulo.toLowerCase());
       if (exists) return;
 
-      // Buscar datos en Sinopsis.txt
-      const key = titulo.toLowerCase().trim();
+      const key = normalizarTitulo(titulo);
       const sinopsis = sinopsisData[key] || {};
 
-      // Intentar encontrar portada local por nombre
       const capa = findCoverByTitle(titulo);
 
       MOVIES_DB.push({
