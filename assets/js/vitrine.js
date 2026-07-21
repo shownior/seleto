@@ -75,7 +75,6 @@ async function loadMoviesFromFile() {
 
       // Linha vazia = separador entre filmes
       if (line === '') {
-        // Se tinha um filme pendente, salva ele
         if (currentMovie && currentMovie.titulo) {
           saveMovie(currentMovie, nextId++);
           currentMovie = null;
@@ -86,7 +85,6 @@ async function loadMoviesFromFile() {
       // Detecta cabeçalho: "Nome - Ano ⭐ Nota"
       const headerMatch = line.match(/^(.+?)\s*-\s*(\d{4})\s*⭐\s*([\d.]+)/);
       if (headerMatch) {
-        // Se tinha um filme anterior, salva ele primeiro
         if (currentMovie && currentMovie.titulo) {
           saveMovie(currentMovie, nextId++);
         }
@@ -101,31 +99,56 @@ async function loadMoviesFromFile() {
         continue;
       }
 
-      // Detecta sinopse: "Sinopsis: texto... | URL"
+      // Detecta sinopse: "Sinopsis: texto... | URL" ou só "Sinopsis: texto..."
       if (currentMovie && line.toLowerCase().startsWith('sinopsis:')) {
         let sinopsisText = line.replace(/^Sinopsis:\s*/i, '').trim();
 
-        // Verifica se a URL está na mesma linha (após o |)
+        // Verifica se tem pipe (|) na linha
         const pipeIndex = sinopsisText.indexOf('|');
         if (pipeIndex !== -1) {
           currentMovie.descricao = sinopsisText.substring(0, pipeIndex).trim();
-          currentMovie.url = sinopsisText.substring(pipeIndex + 1).trim();
+          const possibleUrl = sinopsisText.substring(pipeIndex + 1).trim();
+          if (possibleUrl.startsWith('http')) {
+            currentMovie.url = possibleUrl;
+          }
         } else {
+          // A sinopse pode continuar na próxima linha
           currentMovie.descricao = sinopsisText;
         }
         continue;
       }
 
-      // Linha com URL (quando a sinopse ficou na linha anterior)
+      // Se a linha anterior era sinopse e esta linha tem URL com pipe
+      if (currentMovie && currentMovie.descricao && !currentMovie.url) {
+        const pipeUrlMatch = line.match(/^\s*\|\s*(https?:\/\/.+)/);
+        if (pipeUrlMatch) {
+          currentMovie.url = pipeUrlMatch[1].trim();
+          continue;
+        }
+      }
+
+      // Linha com pipe + URL: "| https://..." ou "|https://..." ou " | https://..."
+      if (currentMovie && !currentMovie.url) {
+        const pipeUrlMatch = line.match(/^\s*\|\s*(https?:\/\/.+)/);
+        if (pipeUrlMatch) {
+          currentMovie.url = pipeUrlMatch[1].trim();
+          continue;
+        }
+      }
+
+      // Linha com URL direta: "https://..."
       if (currentMovie && !currentMovie.url && line.startsWith('http')) {
         currentMovie.url = line.trim();
         continue;
       }
 
-      // Linha com apenas URL (após pipe que ficou sozinho)
-      if (currentMovie && !currentMovie.url && line.startsWith('|')) {
-        currentMovie.url = line.replace(/^\|\s*/, '').trim();
-        continue;
+      // Linha que contém URL em qualquer lugar (fallback)
+      if (currentMovie && !currentMovie.url) {
+        const urlMatch = line.match(/(https?:\/\/drive\.google\.com[^\s]*)/);
+        if (urlMatch) {
+          currentMovie.url = urlMatch[1].trim();
+          continue;
+        }
       }
     }
 
@@ -163,7 +186,7 @@ function saveMovie(movie, id) {
     descricao:   movie.descricao || 'Sinopsis no disponible.',
   });
 
-  console.log(`[SELETO] ✓ "${movie.titulo}" — ${movie.ano} — ⭐${movie.avaliacao}`);
+  console.log(`[SELETO] ✓ "${movie.titulo}" — ${movie.ano} — ⭐${movie.avaliacao} — URL: ${movie.url ? 'OK' : 'MISSING'} — Desc: ${movie.descricao ? 'OK' : 'MISSING'}`);
 }
 
 /**
