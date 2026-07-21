@@ -37,6 +37,7 @@
       max-width: 1200px;
       margin: 0 auto;
       position: relative;
+      width: 100%;
     }
 
     video#main-video {
@@ -46,6 +47,90 @@
       max-height: 80vh;
       background: #000;
       outline: none;
+    }
+
+    /* Iframe wrapper */
+    #video-iframe-wrap {
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      background: #000;
+      width: 100%;
+    }
+
+    #video-iframe-wrap iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    @media (max-width: 600px) {
+      .player-header {
+        height: 50px;
+        padding: 0 12px;
+      }
+
+      .player-header .btn {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+      }
+
+      .player-header .logo-img {
+        height: 28px;
+      }
+
+      .player-stage {
+        margin-top: 0;
+      }
+
+      #video-iframe-wrap {
+        padding-bottom: 62% !important;
+      }
+
+      .player-info-wrap {
+        padding: 16px 12px 0;
+      }
+
+      .player-info-card {
+        padding: 16px;
+      }
+
+      .player-info-card::before {
+        width: 3px;
+      }
+
+      .player-title {
+        font-size: 1.15rem;
+        margin-bottom: 8px;
+      }
+
+      .meta-chips {
+        gap: 6px;
+        margin: 8px 0 14px;
+      }
+
+      .meta-chip {
+        padding: 4px 10px;
+        font-size: 0.68rem;
+      }
+
+      .player-description {
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      .related-wrap {
+        padding: 0 12px 24px;
+      }
+
+      .related-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
     }
 
     /* Línea roja de progreso personalizada (solo estética, no reemplaza los controles) */

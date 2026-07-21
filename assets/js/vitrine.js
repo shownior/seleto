@@ -50,6 +50,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+// ─── Parsear Sinopsis.txt ─────────────────────────────────────────────────────
+
+/**
+ * Lee el archivo Sinopsis.txt y construye un mapa con los datos de cada película.
+ * Formato esperado:
+ *   N. Titulo (Titulo Original) - Ano ⭐ Nota
+ *
+ *   Sinopsis: Texto de la sinopsis...
+ *
+ * @returns {Promise<Object>} Mapa { tituloLower: { ano, avaliacao, descricao } }
+ */
+async function loadSinopsisData() {
+  const sinopsisMap = {};
+  try {
+    const response = await fetch('Sinopsis.txt?' + Date.now());
+    if (!response.ok) throw new Error('Archivo no encontrado');
+
+    const text = await response.text();
+    // Separa cada película por líneas vacías dobles o por el patrón de número
+    const blocks = text.split(/\n\n+/);
+
+    blocks.forEach(block => {
+      const lines = block.trim().split('\n');
+      if (lines.length === 0) return;
+
+      // Primera línea: "1. La Lista de Schindler (Schindler's List) - 1993 ⭐ 9.0"
+      const headerMatch = lines[0].match(/^\d+\.\s+(.+?)\s*-\s*(\d{4})\s*⭐\s*([\d.]+)/);
+      if (!headerMatch) return;
+
+      const tituloRaw = headerMatch[1].trim();
+      const ano = parseInt(headerMatch[2], 10);
+      const avaliacao = parseFloat(headerMatch[3]);
+
+      // Extraer sinopsis: busca línea que empiece con "Sinopsis:"
+      let descricao = '';
+      const sinopsisLine = lines.find(l => l.trim().startsWith('Sinopsis:'));
+      if (sinopsisLine) {
+        descricao = sinopsisLine.replace(/^Sinopsis:\s*/i, '').trim();
+      }
+
+      // Guardar con clave normalizada (sin parentesis del titulo original)
+      const tituloLimpio = tituloRaw.replace(/\s*\(.*?\)\s*/g, '').trim();
+      const key = tituloLimpio.toLowerCase();
+
+      sinopsisMap[key] = { ano, avaliacao, descricao };
+    });
+
+    console.log(`[SELETO] Sinopsis cargada: ${Object.keys(sinopsisMap).length} películas`);
+  } catch (err) {
+    console.warn('[SELETO] No se pudo cargar Sinopsis.txt:', err.message);
+  }
+  return sinopsisMap;
+}
+
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────
 
 /**
@@ -57,6 +111,9 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Formato esperado por línea: nombre de la película | enlace de Google Drive
  */
 async function loadMoviesFromFile() {
+  // Cargar datos de sinopsis primero
+  const sinopsisData = await loadSinopsisData();
+
   try {
     const response = await fetch('filmes.txt?' + Date.now());
     if (!response.ok) throw new Error('Archivo no encontrado');
@@ -77,6 +134,10 @@ async function loadMoviesFromFile() {
       const exists = MOVIES_DB.some(m => m.titulo.toLowerCase() === titulo.toLowerCase());
       if (exists) return;
 
+      // Buscar datos en Sinopsis.txt
+      const key = titulo.toLowerCase().trim();
+      const sinopsis = sinopsisData[key] || {};
+
       // Intentar encontrar portada local por nombre
       const capa = findCoverByTitle(titulo);
 
@@ -84,15 +145,15 @@ async function loadMoviesFromFile() {
         id:          nextId++,
         titulo:      titulo,
         genero:      'Drama',
-        ano:         new Date().getFullYear(),
-        avaliacao:   8.0,
+        ano:         sinopsis.ano || new Date().getFullYear(),
+        avaliacao:   sinopsis.avaliacao || 8.0,
         duracao:     '—',
         capa:        capa,
         url:         url,
-        descricao:   'Película añadida vía filmes.txt.',
+        descricao:   sinopsis.descricao || 'Película añadida vía filmes.txt.',
       });
 
-      console.log(`[SELETO] Película añadida del txt: "${titulo}"`);
+      console.log(`[SELETO] Película añadida: "${titulo}" — ${sinopsis.ano || '?'} — ⭐${sinopsis.avaliacao || '?'}`);
     });
 
   } catch (err) {
