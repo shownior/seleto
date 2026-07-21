@@ -31,17 +31,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Aguarda o Firebase verificar o estado de auth antes de prosseguir
   window.AUTH_UTILS.onAuthStateChanged((user) => {
-    if (initialized) return; // Evita execução múltipla
+    if (initialized) return;
 
     if (!user) {
-      // Pequeno delay para dar tempo ao Firebase restaurar sessão
       setTimeout(() => {
         if (!initialized) {
           initialized = true;
           sessionStorage.setItem('seleto_redirect', window.location.href);
           window.location.replace('index.html');
         }
-      }, 1000); // Aguarda 1s para o Firebase restaurar a sessão
+      }, 1000);
       return;
     }
 
@@ -50,122 +49,121 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// ─── Parsear Sinopsis.txt ─────────────────────────────────────────────────────
-
-/**
- * Normaliza un título para facilitar la comparación.
- * Elimina paréntesis, comas, puntos, acentos extra y convierte a minúsculas.
- * @param {string} titulo
- * @returns {string}
- */
-function normalizarTitulo(titulo) {
-  return titulo
-    .replace(/\s*\(.*?\)\s*/g, '')   // Eliminar paréntesis y su contenido
-    .replace(/[,\.]/g, '')           // Eliminar comas y puntos
-    .normalize('NFD')                // Descomponer acentos
-    .replace(/[\u0300-\u036f]/g, '') // Eliminar marcas de acento
-    .toLowerCase()
-    .replace(/\s+/g, ' ')           // Espacios múltiples a uno
-    .trim();
-}
-
-/**
- * Lee el archivo Sinopsis.txt y construye un mapa con los datos de cada película.
- * Formato esperado:
- *   N. Titulo (Titulo Original) - Ano ⭐ Nota
- *
- *   Sinopsis: Texto de la sinopsis...
- *
- * @returns {Promise<Object>} Mapa { tituloNormalizado: { ano, avaliacao, descricao } }
- */
-async function loadSinopsisData() {
-  const sinopsisMap = {};
-  try {
-    const response = await fetch('Sinopsis.txt?' + Date.now());
-    if (!response.ok) throw new Error('Archivo no encontrado');
-
-    const text = await response.text();
-    const blocks = text.split(/\n\n+/);
-
-    blocks.forEach(block => {
-      const lines = block.trim().split('\n');
-      if (lines.length === 0) return;
-
-      const headerMatch = lines[0].match(/^\d+\.\s+(.+?)\s*-\s*(\d{4})\s*⭐\s*([\d.]+)/);
-      if (!headerMatch) return;
-
-      const tituloRaw = headerMatch[1].trim();
-      const ano = parseInt(headerMatch[2], 10);
-      const avaliacao = parseFloat(headerMatch[3]);
-
-      let descricao = '';
-      const sinopsisLine = lines.find(l => l.trim().startsWith('Sinopsis:'));
-      if (sinopsisLine) {
-        descricao = sinopsisLine.replace(/^Sinopsis:\s*/i, '').trim();
-      }
-
-      const key = normalizarTitulo(tituloRaw);
-      sinopsisMap[key] = { ano, avaliacao, descricao };
-    });
-
-    console.log(`[SELETO] Sinopsis cargada: ${Object.keys(sinopsisMap).length} películas`);
-  } catch (err) {
-    console.warn('[SELETO] No se pudo cargar Sinopsis.txt:', err.message);
-  }
-  return sinopsisMap;
-}
-
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────
 
 /**
- * Busca el archivo filmes.txt y añade las películas al catálogo.
- * Formato esperado por línea: nombre de la película | enlace de Google Drive
+ * Parsea el archivo filmes.txt con el nuevo formato:
+ *   Titulo - Año ⭐ Nota
+ *
+ *   Sinopsis: Descripción... | URL Drive
+ *
+ * @returns {Promise<Array>} Array de películas
  */
 async function loadMoviesFromFile() {
-  const sinopsisData = await loadSinopsisData();
-
   try {
     const response = await fetch('filmes.txt?' + Date.now());
     if (!response.ok) throw new Error('Archivo no encontrado');
 
     const text = await response.text();
-    const lines = text.split('\n').filter(line => line.trim() !== '');
+    const lines = text.split('\n');
 
     let nextId = MOVIES_DB.length + 1;
+    let currentMovie = null;
 
-    lines.forEach(line => {
-      const parts = line.split('|').map(p => p.trim());
-      if (parts.length < 2 || !parts[0] || !parts[1]) return;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
 
-      const titulo = parts[0];
-      const url = parts[1];
+      // Linha vazia = separador entre filmes
+      if (line === '') {
+        // Se tinha um filme pendente, salva ele
+        if (currentMovie && currentMovie.titulo) {
+          saveMovie(currentMovie, nextId++);
+          currentMovie = null;
+        }
+        continue;
+      }
 
-      const exists = MOVIES_DB.some(m => m.titulo.toLowerCase() === titulo.toLowerCase());
-      if (exists) return;
+      // Detecta cabeçalho: "Nome - Ano ⭐ Nota"
+      const headerMatch = line.match(/^(.+?)\s*-\s*(\d{4})\s*⭐\s*([\d.]+)/);
+      if (headerMatch) {
+        // Se tinha um filme anterior, salva ele primeiro
+        if (currentMovie && currentMovie.titulo) {
+          saveMovie(currentMovie, nextId++);
+        }
 
-      const key = normalizarTitulo(titulo);
-      const sinopsis = sinopsisData[key] || {};
+        currentMovie = {
+          titulo: headerMatch[1].trim(),
+          ano: parseInt(headerMatch[2], 10),
+          avaliacao: parseFloat(headerMatch[3]),
+          descricao: '',
+          url: '',
+        };
+        continue;
+      }
 
-      const capa = findCoverByTitle(titulo);
+      // Detecta sinopse: "Sinopsis: texto... | URL"
+      if (currentMovie && line.toLowerCase().startsWith('sinopsis:')) {
+        let sinopsisText = line.replace(/^Sinopsis:\s*/i, '').trim();
 
-      MOVIES_DB.push({
-        id:          nextId++,
-        titulo:      titulo,
-        genero:      'Drama',
-        ano:         sinopsis.ano || new Date().getFullYear(),
-        avaliacao:   sinopsis.avaliacao || 8.0,
-        duracao:     '—',
-        capa:        capa,
-        url:         url,
-        descricao:   sinopsis.descricao || 'Película añadida vía filmes.txt.',
-      });
+        // Verifica se a URL está na mesma linha (após o |)
+        const pipeIndex = sinopsisText.indexOf('|');
+        if (pipeIndex !== -1) {
+          currentMovie.descricao = sinopsisText.substring(0, pipeIndex).trim();
+          currentMovie.url = sinopsisText.substring(pipeIndex + 1).trim();
+        } else {
+          currentMovie.descricao = sinopsisText;
+        }
+        continue;
+      }
 
-      console.log(`[SELETO] Película añadida: "${titulo}" — ${sinopsis.ano || '?'} — ⭐${sinopsis.avaliacao || '?'}`);
-    });
+      // Linha com URL (quando a sinopse ficou na linha anterior)
+      if (currentMovie && !currentMovie.url && line.startsWith('http')) {
+        currentMovie.url = line.trim();
+        continue;
+      }
+
+      // Linha com apenas URL (após pipe que ficou sozinho)
+      if (currentMovie && !currentMovie.url && line.startsWith('|')) {
+        currentMovie.url = line.replace(/^\|\s*/, '').trim();
+        continue;
+      }
+    }
+
+    // Salva o último filme se houver
+    if (currentMovie && currentMovie.titulo) {
+      saveMovie(currentMovie, nextId++);
+    }
+
+    console.log(`[SELETO] ${MOVIES_DB.length} películas cargadas desde filmes.txt`);
 
   } catch (err) {
     console.warn('[SELETO] No se pudo cargar filmes.txt:', err.message);
   }
+}
+
+/**
+ * Guarda una película en el array MOVIES_DB
+ */
+function saveMovie(movie, id) {
+  // Verificar duplicados
+  const exists = MOVIES_DB.some(m => m.titulo.toLowerCase() === movie.titulo.toLowerCase());
+  if (exists) return;
+
+  const capa = findCoverByTitle(movie.titulo);
+
+  MOVIES_DB.push({
+    id:          id,
+    titulo:      movie.titulo,
+    genero:      'Drama',
+    ano:         movie.ano || new Date().getFullYear(),
+    avaliacao:   movie.avaliacao || 8.0,
+    duracao:     '—',
+    capa:        capa,
+    url:         movie.url,
+    descricao:   movie.descricao || 'Sinopsis no disponible.',
+  });
+
+  console.log(`[SELETO] ✓ "${movie.titulo}" — ${movie.ano} — ⭐${movie.avaliacao}`);
 }
 
 /**
