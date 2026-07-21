@@ -12,7 +12,13 @@
 'use strict';
 
 // ─── Mock Data — Catálogo de Películas ────────────────────────────────────────
-const MOVIES_DB = [
+const MOVIES_DB = [];
+
+// ─── Próximamente — Películas sin enlace (solo capa) ──────────────────────────
+// Agrega aquí las películas que quieras mostrar como "Próximamente"
+const COMING_SOON = [
+  // Ejemplo (descomenta y edita):
+  // { titulo: 'nombre-de-la-pelicula.jpg', nome: 'Nombre de la Película' },
 ];
 
 // ─── Estado Local ───────────────────────────────────────────────────────────────
@@ -209,7 +215,24 @@ function findCoverByTitle(titulo) {
 
 function initVitrine() {
   renderUserBadge();
-  renderMovies(MOVIES_DB);
+
+  // Adiciona filmes "em breve" ao catálogo
+  const comingSoonMovies = COMING_SOON.map((item, idx) => ({
+    id:          1000 + idx,
+    titulo:      item.nome || item.titulo,
+    genero:      'Drama',
+    ano:         2026,
+    avaliacao:   0,
+    duracao:     '—',
+    capa:        'capasmovies/' + item.titulo,
+    url:         '',
+    descricao:   'Próximamente en SELETO.',
+    comingSoon:  true,
+  }));
+
+  const allMovies = [...MOVIES_DB, ...comingSoonMovies];
+
+  renderMovies(allMovies);
   bindLogout();
   bindSearch();
   bindFilters();
@@ -241,7 +264,6 @@ function renderMovies(movies) {
 
   if (!grid) return;
 
-  // Limpia el grid
   grid.innerHTML = '';
 
   if (movies.length === 0) {
@@ -250,8 +272,15 @@ function renderMovies(movies) {
   }
   if (emptyEl) emptyEl.style.display = 'none';
 
-  // Crea las tarjetas
-  movies.forEach((movie, index) => {
+  // Ordena por ano (más recientes primero)
+  const sorted = [...movies].sort((a, b) => {
+    // Próximamente sempre vão para o final
+    if (a.comingSoon && !b.comingSoon) return 1;
+    if (!a.comingSoon && b.comingSoon) return -1;
+    return b.ano - a.ano;
+  });
+
+  sorted.forEach((movie, index) => {
     const card = createMovieCard(movie, index);
     grid.appendChild(card);
   });
@@ -264,17 +293,23 @@ function renderMovies(movies) {
  * @returns {HTMLElement}
  */
 function createMovieCard(movie, index) {
-  const card = document.createElement('a');
-  card.className   = 'movie-card';
-  card.href        = `player.html?filme=${movie.id}`;
-  card.setAttribute('aria-label', `Ver ${movie.titulo}`);
-  // Retraso escalonado para animación de entrada
+  const isComingSoon = movie.comingSoon === true;
+
+  let card;
+  if (isComingSoon) {
+    card = document.createElement('div');
+    card.className = 'movie-card coming-soon';
+    card.setAttribute('aria-label', `${movie.titulo} — Próximamente`);
+  } else {
+    card = document.createElement('a');
+    card.className = 'movie-card';
+    card.href = `player.html?filme=${movie.id}`;
+    card.setAttribute('aria-label', `Ver ${movie.titulo}`);
+  }
   card.style.animationDelay = `${index * 0.06}s`;
 
-  // Estrellas — convierte valoración a string visual
-  const stars = getStarsHTML(movie.avaliacao);
-
-  card.innerHTML = `
+  const content = document.createElement('div');
+  content.innerHTML = `
     <div class="movie-thumb">
       <img
         src="${movie.capa}"
@@ -283,16 +318,19 @@ function createMovieCard(movie, index) {
         onerror="this.src='https://picsum.photos/300/450?random=${movie.id + 50}'"
       />
       <div class="movie-thumb-overlay"></div>
+      ${isComingSoon ? '<div class="coming-soon-badge">Próximamente</div>' : ''}
+      ${!isComingSoon ? `
       <div class="play-overlay" aria-hidden="true">
         <div class="play-icon">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <polygon points="5,3 19,12 5,21"/>
           </svg>
         </div>
-      </div>
+      </div>` : ''}
     </div>
     <div class="movie-info">
       <div class="movie-title">${movie.titulo}</div>
+      ${!isComingSoon ? `
       <div class="movie-meta">
         <span class="rating" title="Valoración ${movie.avaliacao}/10">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
@@ -302,9 +340,13 @@ function createMovieCard(movie, index) {
         </span>
         <span class="year">${movie.ano}</span>
         <span>${movie.duracao}</span>
-      </div>
+      </div>` : ''}
     </div>
   `;
+
+  while (content.firstChild) {
+    card.appendChild(content.firstChild);
+  }
 
   return card;
 }

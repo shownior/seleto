@@ -690,6 +690,47 @@ body::before {
   border: 1px solid rgba(255,255,255,0.15);
 }
 
+/* Badge "Próximamente" */
+.coming-soon-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(179,27,27,0.95), rgba(139,0,0,0.95));
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 4px 16px rgba(179,27,27,0.5);
+  white-space: nowrap;
+  z-index: 5;
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+  0%, 100% { box-shadow: 0 4px 16px rgba(179,27,27,0.5); }
+  50%      { box-shadow: 0 4px 24px rgba(179,27,27,0.8); }
+}
+
+/* Película "Próximamente" — sin cursor pointer */
+.movie-card.coming-soon {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.movie-card.coming-soon:hover {
+  transform: translateY(-6px) scale(1.01);
+}
+
+.movie-card.coming-soon:hover .movie-thumb img {
+  transform: scale(1.04);
+}
+
 /* Ícone play central */
 .play-overlay {
   position: absolute;
