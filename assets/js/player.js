@@ -180,6 +180,7 @@ function findCoverByTitlePlayer(titulo) {
     'wall-e':                       'capasmovies/WALL·E.jpg',
     'bastardos sin gloria':         'capasmovies/Bastardos sin gloria.jpg',
     'up una aventura de altura':    'capasmovies/Up una aventura de altura.jpg',
+    'up, una aventura de altura':   'capasmovies/Up una aventura de altura.jpg',
     'el rey león':                  'capasmovies/El rey león.jpg',
     'duro de matar':                'capasmovies/Duro de matar.jpg',
     'proyecto fin del mundo':       'capasmovies/Proyecto Fin del mundo.jpg',
@@ -192,7 +193,11 @@ function findCoverByTitlePlayer(titulo) {
     'top gun maverick':             'capasmovies/Top Gun Maverick.jpg',
     'los horrores de caddo lake':   'capasmovies/Los Horrores de Caddo Lake.jpg',
     'relay el intermediario':       'capasmovies/Relay El Intermediario.jpg',
+    'relay, el intermediario':      'capasmovies/Relay El Intermediario.jpg',
     'like minds':                   'capasmovies/Like Minds.jpg',
+    'contratiempo':                 'capasmovies/Contratiempo.jpg',
+    'dia d':                        'capasmovies/Dia D.jpg',
+    'nada mas que la verdad':       'capasmovies/Nada mas que la Verdad.jpg',
   };
 
   const lower = titulo.toLowerCase().trim();
@@ -279,17 +284,20 @@ function initVideoElement(movie) {
   if (!videoEl || !iframeWrap || !iframeEl) return;
 
   const isGoogleDrive = movie.url.includes('drive.google.com');
+  const isMega = movie.url.includes('mega.nz');
 
-  if (isGoogleDrive) {
-    // Convertir a URL de preview de Google Drive
-    const driveUrl = convertToDrivePreview(movie.url);
+  if (isGoogleDrive || isMega) {
+    let embedUrl = movie.url;
 
-    // Ocultar vídeo nativo, mostrar iframe
+    if (isGoogleDrive) {
+      embedUrl = convertToDrivePreview(movie.url);
+    }
+
     videoEl.style.display = 'none';
     iframeWrap.style.display = 'block';
-    iframeEl.src = driveUrl;
+    iframeEl.src = embedUrl;
 
-    console.info(`[SELETO Player] "${movie.titulo}" — usando iframe Google Drive`);
+    console.info(`[SELETO Player] "${movie.titulo}" — usando iframe ${isGoogleDrive ? 'Google Drive' : 'Mega.nz'}`);
   } else {
     // Usar vídeo nativo
     videoEl.src = movie.url;

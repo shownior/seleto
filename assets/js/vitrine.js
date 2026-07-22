@@ -17,8 +17,16 @@ const MOVIES_DB = [];
 // ─── Próximamente — Películas sin enlace (solo capa) ──────────────────────────
 // Agrega aquí las películas que quieras mostrar como "Próximamente"
 const COMING_SOON = [
-  // Ejemplo (descomenta y edita):
-  // { titulo: 'nombre-de-la-pelicula.jpg', nome: 'Nombre de la Película' },
+  { titulo: 'Buscando Justicia.jpg',      nome: 'Buscando Justicia' },
+  { titulo: 'Diamantes en bruto.jpg',     nome: 'Diamantes en bruto' },
+  { titulo: 'El Abismo Secreto.jpg',      nome: 'El Abismo Secreto' },
+  { titulo: 'El Faro.jpg',                nome: 'El Faro' },
+  { titulo: 'El Libro de Eli.jpg',        nome: 'El Libro de Eli' },
+  { titulo: 'Fractura.jpg',               nome: 'Fractura' },
+  { titulo: 'La leyenda de Klaus.jpg',    nome: 'La leyenda de Klaus' },
+  { titulo: 'La Red Social.jpg',          nome: 'La Red Social' },
+  { titulo: 'Maze Runner.jpg',            nome: 'Maze Runner' },
+  { titulo: 'Togo.jpg',                   nome: 'Togo' },
 ];
 
 // ─── Estado Local ───────────────────────────────────────────────────────────────
@@ -187,6 +195,7 @@ function findCoverByTitle(titulo) {
     'wall-e':                       'capasmovies/WALL·E.jpg',
     'bastardos sin gloria':         'capasmovies/Bastardos sin gloria.jpg',
     'up una aventura de altura':    'capasmovies/Up una aventura de altura.jpg',
+    'up, una aventura de altura':   'capasmovies/Up una aventura de altura.jpg',
     'el rey león':                  'capasmovies/El rey león.jpg',
     'duro de matar':                'capasmovies/Duro de matar.jpg',
     'proyecto fin del mundo':       'capasmovies/Proyecto Fin del mundo.jpg',
@@ -199,7 +208,11 @@ function findCoverByTitle(titulo) {
     'top gun maverick':             'capasmovies/Top Gun Maverick.jpg',
     'los horrores de caddo lake':   'capasmovies/Los Horrores de Caddo Lake.jpg',
     'relay el intermediario':       'capasmovies/Relay El Intermediario.jpg',
+    'relay, el intermediario':      'capasmovies/Relay El Intermediario.jpg',
     'like minds':                   'capasmovies/Like Minds.jpg',
+    'contratiempo':                 'capasmovies/Contratiempo.jpg',
+    'dia d':                        'capasmovies/Dia D.jpg',
+    'nada mas que la verdad':       'capasmovies/Nada mas que la Verdad.jpg',
   };
 
   const lower = titulo.toLowerCase().trim();
