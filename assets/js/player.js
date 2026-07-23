@@ -276,6 +276,11 @@ function renderPlayerInfo(movie) {
  * Detecta automáticamente URLs de Google Drive y usa iframe.
  * @param {Object} movie
  */
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+}
+
 function initVideoElement(movie) {
   const videoEl = document.getElementById('main-video');
   const iframeWrap = document.getElementById('video-iframe-wrap');
@@ -293,11 +298,59 @@ function initVideoElement(movie) {
       embedUrl = convertToDrivePreview(movie.url);
     }
 
-    videoEl.style.display = 'none';
-    iframeWrap.style.display = 'block';
-    iframeEl.src = embedUrl;
+    // Mega.nz em mobile: iframe é bloqueado — mostra overlay com botão
+    if (isMega && isMobileDevice()) {
+      videoEl.style.display = 'none';
+      iframeWrap.style.display = 'none';
 
-    console.info(`[SELETO Player] "${movie.titulo}" — usando iframe ${isGoogleDrive ? 'Google Drive' : 'Mega.nz'}`);
+      const megaOverlay = document.createElement('div');
+      megaOverlay.id = 'mega-mobile-overlay';
+      megaOverlay.style.cssText = `
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        width:100%; aspect-ratio:16/9; background:#000; gap:20px; padding:24px;
+      `;
+      megaOverlay.innerHTML = `
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(179,27,27,0.7)" stroke-width="1.5">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+          <line x1="7" y1="2" x2="7" y2="22"/>
+          <line x1="17" y1="2" x2="17" y2="22"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <line x1="2" y1="7" x2="7" y2="7"/>
+          <line x1="2" y1="17" x2="7" y2="17"/>
+          <line x1="17" y1="7" x2="22" y2="7"/>
+          <line x1="17" y1="17" x2="22" y2="17"/>
+        </svg>
+        <p style="color:var(--text-secondary);font-size:0.9rem;text-align:center;max-width:280px;">
+          Para melhor experiência, abra o vídeo no navegador.
+        </p>
+        <a href="${movie.url}" target="_blank" rel="noopener" id="mega-open-btn"
+           style="
+             display:inline-flex;align-items:center;gap:8px;
+             padding:14px 32px;border-radius:12px;
+             background:linear-gradient(135deg,var(--accent-primary),#8b0000);
+             color:#fff;font-weight:600;font-size:0.9rem;text-decoration:none;
+             box-shadow:0 0 20px rgba(179,27,27,0.4);
+             transition:transform 0.2s,box-shadow 0.2s;
+           ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Assistir no Mega
+        </a>
+      `;
+      iframeWrap.parentElement.insertBefore(megaOverlay, iframeWrap);
+
+      console.info(`[SELETO Player] "${movie.titulo}" — Mega em mobile → overlay com botão externo`);
+    } else {
+      // Desktop ou Google Drive: usa iframe normalmente
+      videoEl.style.display = 'none';
+      iframeWrap.style.display = 'block';
+      iframeEl.src = embedUrl;
+
+      console.info(`[SELETO Player] "${movie.titulo}" — usando iframe ${isGoogleDrive ? 'Google Drive' : 'Mega.nz'}`);
+    }
   } else {
     // Usar vídeo nativo
     videoEl.src = movie.url;
