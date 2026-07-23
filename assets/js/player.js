@@ -50,6 +50,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+// ─── Extraer URL de una línea (soporta URLs puras e iframes) ─────────────────
+function extractUrlFromLine(line) {
+  const iframeMatch = line.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (iframeMatch) {
+    let src = iframeMatch[1];
+    if (src.startsWith('//')) src = 'https:' + src;
+    return src;
+  }
+  const urlMatch = line.match(/(https?:\/\/\S+)/);
+  if (urlMatch) return urlMatch[1];
+  return '';
+}
+
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────
 
 /**
@@ -57,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  *   Titulo - Año ⭐ Nota
  *
  *   Sinopsis: Descripción... | URL Drive
+ *   Género: Acción, Thriller
  */
 async function loadMoviesFromFilePlayer() {
   try {
@@ -83,9 +97,10 @@ async function loadMoviesFromFilePlayer() {
       const ano = parseInt(headerMatch[2], 10);
       const avaliacao = parseFloat(headerMatch[3]);
 
-      // Procura sinopse e URL em todas as outras linhas
+      // Procura sinopse, URL e género em todas as outras linhas
       let descricao = '';
       let url = '';
+      let genero = 'Drama';
 
       for (let j = 1; j < lines.length; j++) {
         const line = lines[j];
@@ -94,25 +109,31 @@ async function loadMoviesFromFilePlayer() {
         if (line.toLowerCase().startsWith('sinopsis:')) {
           let sinopsisText = line.replace(/^Sinopsis:\s*/i, '').trim();
 
-          // Verifica se tem pipe na mesma linha
           const pipeIdx = sinopsisText.indexOf('|');
           if (pipeIdx !== -1) {
             descricao = sinopsisText.substring(0, pipeIdx).trim();
-            const maybeUrl = sinopsisText.substring(pipeIdx + 1).trim();
-            if (maybeUrl.startsWith('http')) {
-              url = maybeUrl;
-            }
+            const afterPipe = sinopsisText.substring(pipeIdx + 1).trim();
+            const extracted = extractUrlFromLine(afterPipe);
+            if (extracted) url = extracted;
           } else {
             descricao = sinopsisText;
           }
           continue;
         }
 
-        // Linha só com pipe + URL
-        const pipeMatch = line.match(/^\|?\s*(https?:\/\/\S+)/);
-        if (pipeMatch && !url) {
-          url = pipeMatch[1];
+        // Linha de género
+        if (line.toLowerCase().startsWith('género:') || line.toLowerCase().startsWith('genero:')) {
+          genero = line.replace(/^g[eé]nero:\s*/i, '').trim();
           continue;
+        }
+
+        // Linha só com pipe + URL (ou iframe)
+        if ((line.startsWith('|') || line.startsWith('<iframe')) && !url) {
+          const extracted = extractUrlFromLine(line);
+          if (extracted) {
+            url = extracted;
+            continue;
+          }
         }
 
         // Linha só com URL
@@ -122,7 +143,7 @@ async function loadMoviesFromFilePlayer() {
         }
       }
 
-      // URL fallback: procura em qualquer lugar do bloco
+      // URL fallback
       if (!url) {
         const urlFallback = block.match(/https?:\/\/drive\.google\.com[^\s|]*/);
         if (urlFallback) {
@@ -139,7 +160,7 @@ async function loadMoviesFromFilePlayer() {
       PLAYER_MOVIES_DB.push({
         id:          nextId++,
         titulo:      titulo,
-        genero:      'Drama',
+        genero:      genero,
         ano:         ano,
         avaliacao:   avaliacao,
         duracao:     '—',
@@ -148,7 +169,7 @@ async function loadMoviesFromFilePlayer() {
         descricao:   descricao || 'Sinopsis no disponible.',
       });
 
-      console.log(`[SELETO Player] ✓ "${titulo}" — ${ano} — ⭐${avaliacao} — URL: ${url ? 'OK' : 'MISSING'} — Desc: ${descricao ? 'OK' : 'MISSING'}`);
+      console.log(`[SELETO Player] ✓ "${titulo}" — ${ano} — ⭐${avaliacao} — Género: ${genero} — URL: ${url ? 'OK' : 'MISSING'} — Desc: ${descricao ? 'OK' : 'MISSING'}`);
     }
 
     console.log(`[SELETO Player] Total: ${PLAYER_MOVIES_DB.length} películas`);
@@ -198,6 +219,7 @@ function findCoverByTitlePlayer(titulo) {
     'contratiempo':                 'capasmovies/Contratiempo.jpg',
     'dia d':                        'capasmovies/Dia D.jpg',
     'nada mas que la verdad':       'capasmovies/Nada mas que la Verdad.jpg',
+    'el descanso':                  'capasmovies/El Descanso.jpg',
   };
 
   const lower = titulo.toLowerCase().trim();
@@ -290,67 +312,26 @@ function initVideoElement(movie) {
 
   const isGoogleDrive = movie.url.includes('drive.google.com');
   const isMega = movie.url.includes('mega.nz');
+  const isOkRu = movie.url.includes('ok.ru');
 
-  if (isGoogleDrive || isMega) {
+  if (isGoogleDrive || isMega || isOkRu) {
     let embedUrl = movie.url;
 
     if (isGoogleDrive) {
       embedUrl = convertToDrivePreview(movie.url);
     }
 
-    // Mega.nz em mobile: iframe é bloqueado — mostra overlay com botão
+    videoEl.style.display = 'none';
+    iframeWrap.style.display = 'block';
+    iframeEl.src = embedUrl;
+
+    // Mega em mobile: tenta carregar o iframe, mas mostra fallback se falhar
     if (isMega && isMobileDevice()) {
-      videoEl.style.display = 'none';
-      iframeWrap.style.display = 'none';
-
-      const megaOverlay = document.createElement('div');
-      megaOverlay.id = 'mega-mobile-overlay';
-      megaOverlay.style.cssText = `
-        display:flex; flex-direction:column; align-items:center; justify-content:center;
-        width:100%; aspect-ratio:16/9; background:#000; gap:20px; padding:24px;
-      `;
-      megaOverlay.innerHTML = `
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(179,27,27,0.7)" stroke-width="1.5">
-          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
-          <line x1="7" y1="2" x2="7" y2="22"/>
-          <line x1="17" y1="2" x2="17" y2="22"/>
-          <line x1="2" y1="12" x2="22" y2="12"/>
-          <line x1="2" y1="7" x2="7" y2="7"/>
-          <line x1="2" y1="17" x2="7" y2="17"/>
-          <line x1="17" y1="7" x2="22" y2="7"/>
-          <line x1="17" y1="17" x2="22" y2="17"/>
-        </svg>
-        <p style="color:var(--text-secondary);font-size:0.9rem;text-align:center;max-width:280px;">
-          Para melhor experiência, abra o vídeo no navegador.
-        </p>
-        <a href="${movie.url}" target="_blank" rel="noopener" id="mega-open-btn"
-           style="
-             display:inline-flex;align-items:center;gap:8px;
-             padding:14px 32px;border-radius:12px;
-             background:linear-gradient(135deg,var(--accent-primary),#8b0000);
-             color:#fff;font-weight:600;font-size:0.9rem;text-decoration:none;
-             box-shadow:0 0 20px rgba(179,27,27,0.4);
-             transition:transform 0.2s,box-shadow 0.2s;
-           ">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          Assistir no Mega
-        </a>
-      `;
-      iframeWrap.parentElement.insertBefore(megaOverlay, iframeWrap);
-
-      console.info(`[SELETO Player] "${movie.titulo}" — Mega em mobile → overlay com botão externo`);
-    } else {
-      // Desktop ou Google Drive: usa iframe normalmente
-      videoEl.style.display = 'none';
-      iframeWrap.style.display = 'block';
-      iframeEl.src = embedUrl;
-
-      console.info(`[SELETO Player] "${movie.titulo}" — usando iframe ${isGoogleDrive ? 'Google Drive' : 'Mega.nz'}`);
+      showMegaFallback(movie, iframeWrap, iframeEl);
     }
+
+    const iframeSource = isGoogleDrive ? 'Google Drive' : isOkRu ? 'ok.ru' : 'Mega.nz';
+    console.info(`[SELETO Player] "${movie.titulo}" — usando iframe ${iframeSource}`);
   } else {
     // Usar vídeo nativo
     videoEl.src = movie.url;
@@ -380,6 +361,75 @@ function initVideoElement(movie) {
       videoEl.currentTime = savedProgress;
     }
   }
+}
+
+/**
+ * Mega em mobile: tenta carregar o iframe normalmente.
+ * Se após 5s o iframe não carregou (redirecionou pro app),
+ * esconde o iframe e mostra overlay com link direto.
+ */
+function showMegaFallback(movie, iframeWrap, iframeEl) {
+  let loaded = false;
+
+  // Se o iframe carregar com sucesso, não faz nada
+  iframeEl.addEventListener('load', () => {
+    loaded = true;
+  });
+
+  // Após 5s, verifica se carregou
+  setTimeout(() => {
+    if (loaded) return;
+
+    // Esconde o iframe quebrado
+    iframeWrap.style.display = 'none';
+
+    // Cria overlay de fallback
+    const overlay = document.createElement('div');
+    overlay.id = 'mega-fallback-overlay';
+    overlay.style.cssText = `
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      width:100%; aspect-ratio:16/9; background:#000; gap:16px; padding:24px;
+      border-radius:12px; overflow:hidden; position:relative;
+    `;
+    overlay.innerHTML = `
+      <div style="
+        position:absolute; inset:0;
+        background:radial-gradient(ellipse at center, rgba(179,27,27,0.08) 0%, transparent 70%);
+        pointer-events:none;
+      "></div>
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+           stroke="rgba(179,27,27,0.6)" stroke-width="1.5" style="opacity:0.7;">
+        <polygon points="5,3 19,12 5,21"/>
+      </svg>
+      <p style="
+        color:var(--text-secondary); font-size:0.85rem; text-align:center;
+        max-width:260px; line-height:1.5; z-index:1;
+      ">
+        Toque no botão abaixo para assistir
+      </p>
+      <a href="${movie.url}" target="_blank" rel="noopener noreferrer"
+         style="
+           display:inline-flex;align-items:center;gap:8px;
+           padding:14px 36px;border-radius:12px;
+           background:linear-gradient(135deg,var(--accent-primary),#8b0000);
+           color:#fff;font-weight:600;font-size:0.88rem;text-decoration:none;
+           box-shadow:0 0 24px rgba(179,27,27,0.45);
+           transition:transform 0.2s,box-shadow 0.2s;
+           z-index:1; position:relative;
+         "
+         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 0 32px rgba(179,27,27,0.6)'"
+         onmouseout="this.style.transform='';this.style.boxShadow='0 0 24px rgba(179,27,27,0.45)'"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+          <polygon points="5,3 19,12 5,21"/>
+        </svg>
+        Assistir Agora
+      </a>
+    `;
+
+    iframeWrap.parentElement.insertBefore(overlay, iframeWrap);
+    console.warn(`[SELETO Player] "${movie.titulo}" — Mega iframe não carregou em mobile → fallback`);
+  }, 5000);
 }
 
 /**

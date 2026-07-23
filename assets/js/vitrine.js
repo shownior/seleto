@@ -63,6 +63,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+// ─── Extraer URL de una línea (soporta URLs puras e iframes) ─────────────────
+function extractUrlFromLine(line) {
+  // Se é um iframe, extrai o src
+  const iframeMatch = line.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (iframeMatch) {
+    let src = iframeMatch[1];
+    // Protocol-relative URL (//ok.ru/...) → https:
+    if (src.startsWith('//')) src = 'https:' + src;
+    return src;
+  }
+  // Se é URL pura
+  const urlMatch = line.match(/(https?:\/\/\S+)/);
+  if (urlMatch) return urlMatch[1];
+  return '';
+}
+
 // ─── Cargar películas del archivo filmes.txt ──────────────────────────────────────
 
 /**
@@ -70,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  *   Titulo - Año ⭐ Nota
  *
  *   Sinopsis: Descripción... | URL Drive
+ *   Género: Acción, Thriller
  */
 async function loadMoviesFromFile() {
   try {
@@ -97,9 +114,10 @@ async function loadMoviesFromFile() {
       const ano = parseInt(headerMatch[2], 10);
       const avaliacao = parseFloat(headerMatch[3]);
 
-      // Procura sinopse e URL em todas as outras linhas
+      // Procura sinopse, URL e género em todas as outras linhas
       let descricao = '';
       let url = '';
+      let genero = 'Drama';
 
       for (let j = 1; j < lines.length; j++) {
         const line = lines[j];
@@ -112,21 +130,28 @@ async function loadMoviesFromFile() {
           const pipeIdx = sinopsisText.indexOf('|');
           if (pipeIdx !== -1) {
             descricao = sinopsisText.substring(0, pipeIdx).trim();
-            const maybeUrl = sinopsisText.substring(pipeIdx + 1).trim();
-            if (maybeUrl.startsWith('http')) {
-              url = maybeUrl;
-            }
+            const afterPipe = sinopsisText.substring(pipeIdx + 1).trim();
+            const extracted = extractUrlFromLine(afterPipe);
+            if (extracted) url = extracted;
           } else {
             descricao = sinopsisText;
           }
           continue;
         }
 
-        // Linha só com pipe + URL
-        const pipeMatch = line.match(/^\|?\s*(https?:\/\/\S+)/);
-        if (pipeMatch && !url) {
-          url = pipeMatch[1];
+        // Linha de género
+        if (line.toLowerCase().startsWith('género:') || line.toLowerCase().startsWith('genero:')) {
+          genero = line.replace(/^g[eé]nero:\s*/i, '').trim();
           continue;
+        }
+
+        // Linha só com pipe + URL (ou iframe)
+        if ((line.startsWith('|') || line.startsWith('<iframe')) && !url) {
+          const extracted = extractUrlFromLine(line);
+          if (extracted) {
+            url = extracted;
+            continue;
+          }
         }
 
         // Linha só com URL
@@ -153,7 +178,7 @@ async function loadMoviesFromFile() {
       MOVIES_DB.push({
         id:          nextId++,
         titulo:      titulo,
-        genero:      'Drama',
+        genero:      genero,
         ano:         ano,
         avaliacao:   avaliacao,
         duracao:     '—',
@@ -162,7 +187,7 @@ async function loadMoviesFromFile() {
         descricao:   descricao || 'Sinopsis no disponible.',
       });
 
-      console.log(`[SELETO] ✓ "${titulo}" — ${ano} — ⭐${avaliacao} — URL: ${url ? 'OK' : 'MISSING'} — Desc: ${descricao ? 'OK' : 'MISSING'}`);
+      console.log(`[SELETO] ✓ "${titulo}" — ${ano} — ⭐${avaliacao} — Género: ${genero} — URL: ${url ? 'OK' : 'MISSING'} — Desc: ${descricao ? 'OK' : 'MISSING'}`);
     }
 
     console.log(`[SELETO] Total: ${MOVIES_DB.length} películas`);
@@ -213,6 +238,7 @@ function findCoverByTitle(titulo) {
     'contratiempo':                 'capasmovies/Contratiempo.jpg',
     'dia d':                        'capasmovies/Dia D.jpg',
     'nada mas que la verdad':       'capasmovies/Nada mas que la Verdad.jpg',
+    'el descanso':                  'capasmovies/El Descanso.jpg',
   };
 
   const lower = titulo.toLowerCase().trim();
